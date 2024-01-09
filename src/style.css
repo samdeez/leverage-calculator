@@ -1,0 +1,103 @@
+html {
+  background-color: #1b1b1b;
+  font-size: 16px;
+}
+h1,
+h2 {
+  font-size: 18px;
+}
+.App {
+  font-family: sans-serif;
+  text-align: center;
+}
+.gas-section {
+  font-family: monospace;
+  text-align: center;
+  color: whitesmoke;
+}
+.container {
+  color: whitesmoke;
+  font-family: monospace;
+  display: flex;
+  flex-direction: column;
+}
+.insidecol {
+  border: 1px solid gray;
+  border-radius: 3px;
+  margin: 5px;
+  padding: 25px;
+}
+.inputContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 7px;
+  justify-content: center;
+}
+.inputLabel {
+  margin-right: 10px;
+  width: 150px;
+}
+.outputLabel {
+  margin: 5px;
+  margin-top: 15px;
+  font-size: small;
+}
+.input {
+  max-width: 150px;
+  height: 30px;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid lightgray;
+  background-color: #1b1b1b; 
+  color: whitesmoke;
+  transition: all 0.2s;
+}
+input:focus {
+  background-color: #252525;
+  border: 5px solid goldenrod;
+  transition: all 0.2s;
+}
+.inputSuffix {
+  margin-left: 10px;
+}
+.result {
+  margin-top: 0;
+  font-style: bold;
+  display: grid;
+  flex-direction: cloumn;
+  line-height: 0px;
+  align-items: center;
+  justify-content: space-around;
+  text-align: center;
+  border-top: 1px solid gray;
+}
+.reswrapper {
+  display: flex;
+  flex-direction: row;
+}
+.reswrapperinner {
+  width: -webkit-fill-available;
+}
+.resultgrid {
+  color: black;
+  font-weight: bold;
+  background-color: gray;
+  border-radius: 10px;
+  padding: 10px;
+  line-height: 30px;
+  margin: 5px;
+}
+.pl {
+  display: flex;
+  flex-direction: column;
+}
+
+@media only screen and (min-width: 1024px) {
+  .container {
+    flex-direction: row;
+    justify-content: center;
+  }
+  .insidecol {
+    width: 400px;
+  }
+}
