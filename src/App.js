@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import style from "./style.css";
+import "./style.css";
 
 const App = () => {
   const [feesPercent, setFeesPercent] = useState(10);
