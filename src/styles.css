@@ -6,6 +6,13 @@ h1,
 h2 {
   font-size: 18px;
 }
+h1 {
+  background-color: darkslategray;
+  border-radius: 5px;
+  padding: 5px;
+  font-family: monospace;
+  text-align: center;
+}
 .App {
   font-family: sans-serif;
   text-align: center;
@@ -22,10 +29,8 @@ h2 {
   flex-direction: column;
 }
 .insidecol {
-  border: 1px solid gray;
-  border-radius: 3px;
-  margin: 5px;
-  padding: 25px;
+  margin: 10px;
+  padding: 10px;
 }
 .inputContainer {
   display: flex;
@@ -83,7 +88,7 @@ input:focus {
 .resultgrid {
   color: black;
   font-weight: bold;
-  background-color: gray;
+  background-color: darkkhaki;
   border-radius: 10px;
   padding: 10px;
   line-height: 30px;
@@ -93,6 +98,9 @@ input:focus {
   display: flex;
   flex-direction: column;
 }
+hr {
+  color: gray;
+}
 
 @media only screen and (min-width: 1024px) {
   .container {
@@ -101,5 +109,8 @@ input:focus {
   }
   .insidecol {
     width: 400px;
+    margin: 40px;
+    margin-left: 60px;
+    margin-right: 60px;
   }
 }

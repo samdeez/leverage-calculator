@@ -52,24 +52,14 @@ const App = () => {
 
   return (
     <div className="container-wrapper">
-      <h1
-        style={{
-          //marginTop: "100px",
-          backgroundColor: "blue",
-          borderRadius: "3px",
-          padding: "10px",
-          textAlign: "center",
-          color: "whitesmoke",
-          fontFamily: "monospace",
-        }}
-      >
-        Leverage Calculator
-      </h1>
+      <h1>Leverage Calculator</h1>
 
       <div className="container">
         <div className="insidecol">
-          <h2 style={{ textAlign: "center" }}>Input Trade Details:</h2>
-          <hr style={{ marginBottom: "50px" }} />
+          <h2 style={{ color: "gray", textAlign: "center" }}>
+            Input Trade Details:
+          </h2>
+          <hr style={{ marginBottom: "30px" }} />
           <div className="inputContainer">
             <div className="inputLabel">Trade Amount:</div>
             <input
@@ -150,7 +140,7 @@ const App = () => {
           <p
             className="resultgrid"
             style={{
-              backgroundColor: "#303030",
+              backgroundColor: "#2f2f2f",
               color: levCalc() < 0 ? "firebrick" : "seagreen",
             }}
           >
@@ -167,7 +157,7 @@ const App = () => {
               <div
                 className="resultgrid"
                 style={{
-                  backgroundColor: "gray",
+                  backgroundColor: "slategray",
                 }}
               >
                 <span style={{ fontSize: "small" }}>{"IN:"}</span> <br />
@@ -183,7 +173,8 @@ const App = () => {
               <div
                 className="resultgrid"
                 style={{
-                  backgroundColor: "rgb(178, 130, 10)",
+                  backgroundColor: "darkslategray",
+                  color: "gold",
                 }}
               >
                 <span style={{ fontSize: "small" }}>Long ⬆</span>
@@ -214,7 +205,7 @@ const App = () => {
             <p
               className="resultgrid"
               style={{
-                backgroundColor: "darkslategray",
+                backgroundColor: "sienna",
               }}
             >
               {(invest * leverage).toLocaleString()} $
