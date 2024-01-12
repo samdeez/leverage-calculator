@@ -133,6 +133,11 @@ const App = () => {
             />
             <div className="inputSuffix">%</div>
           </div>
+
+          <div className="note">
+            <p>- Don't get greedy! Take profits while you can!</p>
+            <p>- WGMI 2024</p>
+          </div>
         </div>
 
         <div className="insidecol">
@@ -141,6 +146,7 @@ const App = () => {
             className="resultgrid"
             style={{
               backgroundColor: "#2f2f2f",
+              background: "linear-gradient(45deg, black, darkslategray)",
               color: levCalc() < 0 ? "firebrick" : "seagreen",
             }}
           >
@@ -158,6 +164,7 @@ const App = () => {
                 className="resultgrid"
                 style={{
                   backgroundColor: "gray",
+                  background: "linear-gradient(gray, darkslategray)",
                 }}
               >
                 <span style={{ fontSize: "small" }}>{"IN:"}</span> <br />
@@ -174,6 +181,7 @@ const App = () => {
                 className="resultgrid"
                 style={{
                   backgroundColor: "darkslategray",
+                  background: "linear-gradient(goldenrod, #1a0000)",
                   color: "gold",
                 }}
               >
@@ -206,6 +214,7 @@ const App = () => {
               className="resultgrid"
               style={{
                 backgroundColor: "sienna",
+                background: "linear-gradient(45deg, sienna, gray)",
               }}
             >
               {(invest * leverage).toLocaleString()} $

@@ -89,6 +89,7 @@ input:focus {
   color: black;
   font-weight: bold;
   background-color: darkkhaki;
+  background: linear-gradient(90deg, darkkhaki, darkolivegreen);
   border-radius: 10px;
   padding: 10px;
   line-height: 30px;
@@ -101,6 +102,10 @@ input:focus {
 hr {
   color: gray;
 }
+.note {
+  font-size:medium;
+  margin-top: 50px;
+}
 
 @media only screen and (min-width: 1024px) {
   .container {
@@ -112,5 +117,8 @@ hr {
     margin: 40px;
     margin-left: 60px;
     margin-right: 60px;
+  }
+  .note {
+    margin-top: 215px;
   }
 }
