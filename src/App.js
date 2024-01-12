@@ -119,7 +119,7 @@ const App = () => {
               className="input"
               placeholder="0"
             />
-            <div className="inputSuffix">$</div>
+            <div className="inputSuffix">x</div>
           </div>
 
           <div className="inputContainer">
@@ -157,7 +157,7 @@ const App = () => {
               <div
                 className="resultgrid"
                 style={{
-                  backgroundColor: "slategray",
+                  backgroundColor: "gray",
                 }}
               >
                 <span style={{ fontSize: "small" }}>{"IN:"}</span> <br />
