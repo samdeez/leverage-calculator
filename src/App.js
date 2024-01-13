@@ -221,7 +221,7 @@ const App = () => {
             {(levCalc() * localPrice).toLocaleString()} T
             <br />
             <span style={{ color: "gray", fontSize: "medium" }}>
-              Funding: -{fundingHour * hours}$
+              -{fundingHour * hours}$ Funding
             </span>
           </p>
           <div className="reswrapper">

@@ -58,7 +58,7 @@ h1 {
 }
 input:focus {
   background-color: #252525;
-  border: 4px solid goldenrod;
+  border: 4px solid sienna;
   transition: all 0.1s;
 }
 .inputSuffix {
