@@ -7,6 +7,9 @@ const App = () => {
   const [enterPrice, setEnterPrice] = useState("");
   const [exitPrice, setExitPrice] = useState("");
   const [leverage, setLeverage] = useState(10);
+  const [percentPrice, setPercentPrice] = useState(0);
+  const [fundingHour, setFundingHour] = useState(0.01);
+  const [hours, setHours] = useState(0);
 
   const handleFeesPercentChange = (event) => {
     setFeesPercent(event.target.value);
@@ -17,11 +20,24 @@ const App = () => {
   };
 
   const handleEnterPriceChange = (event) => {
+    const percentChange =
+      ((exitPrice - event.target.value) / event.target.value) * 100;
+    setPercentPrice(percentChange);
     setEnterPrice(event.target.value);
   };
 
   const handleExitPriceChange = (event) => {
+    const percentChange =
+      ((event.target.value - enterPrice) / enterPrice) * 100;
+    setPercentPrice(percentChange.toFixed(2));
     setExitPrice(event.target.value);
+  };
+
+  const handlePercentPriceChange = (event) => {
+    const percentChange = parseFloat(event.target.value);
+    const newExitPrice = enterPrice * (1 + percentChange / 100);
+    setPercentPrice(percentChange);
+    setExitPrice(newExitPrice.toFixed(2));
   };
 
   const handleLeverageChange = (event) => {
@@ -30,6 +46,14 @@ const App = () => {
 
   const handleInvestChange = (event) => {
     setInvest(event.target.value);
+  };
+
+  const handleFundingHour = (event) => {
+    setFundingHour(event.target.value);
+  };
+
+  const handleHours = (event) => {
+    setHours(event.target.value);
   };
 
   function levCalc() {
@@ -134,6 +158,42 @@ const App = () => {
             <div className="inputSuffix">%</div>
           </div>
 
+          <div className="inputContainer">
+            <div className="inputLabel">% Change:</div>
+            <input
+              type="number"
+              value={percentPrice}
+              onChange={handlePercentPriceChange}
+              className="input"
+              placeholder="0%"
+            />
+            <div className="inputSuffix">%</div>
+          </div>
+
+          <div className="inputContainer">
+            <div className="inputLabel">Funding/h:</div>
+            <input
+              type="number"
+              value={fundingHour}
+              onChange={handleFundingHour}
+              className="input"
+              placeholder="$"
+            />
+            <div className="inputSuffix">$</div>
+          </div>
+
+          <div className="inputContainer">
+            <div className="inputLabel">Hours Open:</div>
+            <input
+              type="number"
+              value={hours}
+              onChange={handleHours}
+              className="input"
+              placeholder="h"
+            />
+            <div className="inputSuffix">h</div>
+          </div>
+
           <div className="note">
             <p>- Don't get greedy! Take profits while you can!</p>
             <p>- WGMI 2024</p>
@@ -159,6 +219,10 @@ const App = () => {
             $
             <br />
             {(levCalc() * localPrice).toLocaleString()} T
+            <br />
+            <span style={{ color: "gray", fontSize: "medium" }}>
+              Funding: -{fundingHour * hours}$
+            </span>
           </p>
           <div className="reswrapper">
             <div className="reswrapperinner">
@@ -184,7 +248,14 @@ const App = () => {
                 </span>{" "}
                 <br />
                 <span style={{ color: "#d0d0d0" }}>
-                  {(exitPrice * 1).toLocaleString()} $
+                  {(exitPrice * 1).toLocaleString()} ${" "}
+                  <span
+                    style={{
+                      color: percentPrice >= 0 ? "seagreen" : "firebrick",
+                    }}
+                  >
+                    {percentPrice > 0 ? "+" + percentPrice : percentPrice}%
+                  </span>
                 </span>
               </div>
             </div>
