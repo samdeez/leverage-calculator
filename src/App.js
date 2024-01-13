@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 
 const App = () => {
-  const [feesPercent, setFeesPercent] = useState(10);
+  const [feesPercent, setFeesPercent] = useState(5);
   const [localPrice, setlocalPrice] = useState(52000);
   const [invest, setInvest] = useState("");
   const [enterPrice, setEnterPrice] = useState("");
   const [exitPrice, setExitPrice] = useState("");
-  const [leverage, setLeverage] = useState(5);
+  const [leverage, setLeverage] = useState(10);
 
   const handleFeesPercentChange = (event) => {
     setFeesPercent(event.target.value);
@@ -146,7 +146,10 @@ const App = () => {
             className="resultgrid"
             style={{
               backgroundColor: "#2f2f2f",
-              background: "linear-gradient(45deg, black, darkslategray)",
+              background:
+                levCalc() < 0
+                  ? "linear-gradient(45deg, black, #4f2f2f)"
+                  : "linear-gradient(45deg, black, darkslategray)",
               color: levCalc() < 0 ? "firebrick" : "seagreen",
             }}
           >
@@ -164,15 +167,25 @@ const App = () => {
                 className="resultgrid"
                 style={{
                   backgroundColor: "gray",
-                  background: "linear-gradient(gray, darkslategray)",
+                  background: "linear-gradient(45deg, #333, black)",
                 }}
               >
-                <span style={{ fontSize: "small" }}>{"IN:"}</span> <br />
-                <span>{(enterPrice * 1).toLocaleString()} $</span>
+                <span style={{ fontSize: "small", color: "gray" }}>
+                  {"IN:"}
+                </span>{" "}
+                <br />
+                <span style={{ color: "#d0d0d0" }}>
+                  {(enterPrice * 1).toLocaleString()} $
+                </span>
                 <br />
                 <hr class="solid" style={{ margin: "5px" }} />
-                <span style={{ fontSize: "small" }}>{"OUT:"}</span> <br />
-                <span>{(exitPrice * 1).toLocaleString()} $</span>
+                <span style={{ fontSize: "small", color: "gray" }}>
+                  {"OUT:"}
+                </span>{" "}
+                <br />
+                <span style={{ color: "#d0d0d0" }}>
+                  {(exitPrice * 1).toLocaleString()} $
+                </span>
               </div>
             </div>
             <div className="reswrapperinner">
@@ -181,18 +194,20 @@ const App = () => {
                 className="resultgrid"
                 style={{
                   backgroundColor: "darkslategray",
-                  background: "linear-gradient(goldenrod, #1a0000)",
-                  color: "gold",
+                  background: "linear-gradient(45deg, #333, black)",
+                  color: "goldenrod",
                 }}
               >
-                <span style={{ fontSize: "small" }}>Long ⬆</span>
+                <span style={{ fontSize: "small", color: "gray" }}>Long ⬆</span>
                 <br />
                 <span>
                   {(enterPrice - enterPrice / leverage).toLocaleString()} $
                 </span>
                 <br />
                 <hr class="solid" style={{ margin: "5px" }} />
-                <span style={{ fontSize: "small" }}>Short ⬇</span>
+                <span style={{ fontSize: "small", color: "gray" }}>
+                  Short ⬇
+                </span>
                 <br />
                 <span>{shortCalc()} $</span>
               </div>
@@ -214,7 +229,8 @@ const App = () => {
               className="resultgrid"
               style={{
                 backgroundColor: "sienna",
-                background: "linear-gradient(45deg, sienna, gray)",
+                background: "linear-gradient(135deg, sienna, gray)",
+                color: "burlywood",
               }}
             >
               {(invest * leverage).toLocaleString()} $

@@ -86,10 +86,10 @@ input:focus {
   width: -webkit-fill-available;
 }
 .resultgrid {
-  color: black;
+  color: burlywood;
   font-weight: bold;
-  background-color: darkkhaki;
-  background: linear-gradient(90deg, darkkhaki, darkolivegreen);
+  background-color: #404040;
+  background: linear-gradient(45deg, #404040, gray);
   border-radius: 10px;
   padding: 10px;
   line-height: 30px;
