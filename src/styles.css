@@ -89,6 +89,7 @@ input:focus {
   font-weight: bold;
   background-color: #404040;
   background: linear-gradient(45deg, #404040, gray);
+  border: 2px solid gray;
   border-radius: 10px;
   padding: 10px;
   line-height: 30px;

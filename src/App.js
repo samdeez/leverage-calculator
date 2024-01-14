@@ -223,7 +223,7 @@ const App = () => {
             <span style={{ color: "gray", fontSize: "medium" }}>
               Funding: -{fundingHour * hours}$ |
             </span>
-            <span>
+            <span style={{ fontSize: "medium" }}>
               {" "}
               ROI:{" "}
               {((levCalc() / invest) * 100).toFixed(1) < 100
