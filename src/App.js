@@ -29,7 +29,7 @@ const App = () => {
   const handleExitPriceChange = (event) => {
     const percentChange =
       ((event.target.value - enterPrice) / enterPrice) * 100;
-    setPercentPrice(percentChange.toFixed(2));
+    setPercentPrice(percentChange);
     setExitPrice(event.target.value);
   };
 
@@ -221,7 +221,15 @@ const App = () => {
             {(levCalc() * localPrice).toLocaleString()} T
             <br />
             <span style={{ color: "gray", fontSize: "medium" }}>
-              -{fundingHour * hours}$ Funding
+              Funding: -{fundingHour * hours}$ |
+            </span>
+            <span>
+              {" "}
+              ROI:{" "}
+              {((levCalc() / invest) * 100).toFixed(1) < 100
+                ? 100
+                : ((levCalc() / invest) * 100).toFixed(1)}
+              %
             </span>
           </p>
           <div className="reswrapper">
@@ -254,7 +262,10 @@ const App = () => {
                       color: percentPrice >= 0 ? "seagreen" : "firebrick",
                     }}
                   >
-                    {percentPrice > 0 ? "+" + percentPrice : percentPrice}%
+                    {percentPrice > 0
+                      ? "+" + percentPrice.toFixed(2)
+                      : percentPrice.toFixed(2)}
+                    %
                   </span>
                 </span>
               </div>
