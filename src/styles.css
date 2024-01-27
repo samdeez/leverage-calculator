@@ -17,6 +17,23 @@ h1 {
   font-family: sans-serif;
   text-align: center;
 }
+.button-wrapper {
+  display: flex;
+  justify-content: center;
+}
+button {
+  margin: 5px;
+  border-radius: 5px;
+  padding: 5px;
+  background-color: gray;
+  color: black;
+  border: 1px solid black;
+  box-shadow: 3px 3px 2px black;
+  font-weight: bold;
+}
+button:active {
+  box-shadow: 1px 1px 2px black;
+}
 .gas-section {
   font-family: monospace;
   text-align: center;
