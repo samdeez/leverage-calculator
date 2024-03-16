@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const Isolated = () => {
+const Leverage = () => {
   const [feesPercent, setFeesPercent] = useState(0);
   const [localPrice, setlocalPrice] = useState(55000);
   const [invest, setInvest] = useState("");
@@ -78,7 +78,7 @@ const Isolated = () => {
     <div className="container">
       <div className="insidecol">
         <h2 style={{ color: "gray", textAlign: "center" }}>
-          input isolated trade:
+          input leverage trade:
         </h2>
         <hr style={{ marginBottom: "30px" }} />
         <div className="inputContainer">
@@ -321,4 +321,4 @@ const Isolated = () => {
   );
 };
 
-export default Isolated;
+export default Leverage;

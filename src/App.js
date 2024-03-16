@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import Isolated from "./Isolated";
-import Cross from "./Cross";
+import Leverage from "./Leverage";
+import Spot from "./Spot";
 
 const App = () => {
-  const [cross, setCross] = useState(false);
-  const [isolated, setIsolated] = useState(true);
+  const [cross, setCross] = useState(true);
+  const [isolated, setIsolated] = useState(false);
 
   const handleIsolated = () => {
     setIsolated(true);
@@ -17,18 +17,8 @@ const App = () => {
 
   return (
     <div className="container-wrapper">
-      <h1>Leverage Calculator</h1>
+      <h1>$ Degen Calculator $</h1>
       <div className="button-wrapper">
-        <button
-          onClick={handleIsolated}
-          style={
-            isolated
-              ? { backgroundColor: "darkslategray" }
-              : { backgroundColor: "gray" }
-          }
-        >
-          Isolated
-        </button>
         <button
           onClick={handleCross}
           style={
@@ -37,10 +27,20 @@ const App = () => {
               : { backgroundColor: "gray" }
           }
         >
-          Cross
+          Degen
+        </button>
+        <button
+          onClick={handleIsolated}
+          style={
+            isolated
+              ? { backgroundColor: "darkslategray" }
+              : { backgroundColor: "gray" }
+          }
+        >
+          Leverage
         </button>
       </div>
-      {isolated ? <Isolated /> : <Cross />}
+      {isolated ? <Leverage /> : <Spot />}
     </div>
   );
 };
