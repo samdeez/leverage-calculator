@@ -117,7 +117,7 @@ const Spot = () => {
           <input
             type="number"
             value={percentToSell}
-            onChange={handlePercentPriceChange}
+            onChange={handlePercentToSell}
             className="input"
             placeholder="0%"
           />
