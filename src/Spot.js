@@ -60,13 +60,6 @@ const Spot = () => {
     return levSum;
   }
 
-  function shortCalc() {
-    let shortLiq = enterPrice / leverage;
-    shortLiq += +enterPrice;
-
-    return shortLiq.toLocaleString();
-  }
-
   return (
     <div className="container">
       <div className="insidecol">
