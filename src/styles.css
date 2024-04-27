@@ -101,10 +101,10 @@ input:focus {
   width: -webkit-fill-available;
 }
 .resultgrid {
-  color: burlywood;
+  color: gray;
   font-weight: bold;
   background-color: #404040;
-  background: linear-gradient(45deg, #404040, gray);
+  background: linear-gradient(45deg, #333, black);
   border: 1px solid gray;
   border-radius: 10px;
   padding: 10px;

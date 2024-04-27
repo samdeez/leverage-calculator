@@ -155,7 +155,7 @@ const Spot = () => {
 
         <div className="note">
           <p>- Don't get greedy! Take profits while you can!</p>
-          <p>- WGMI 2024</p>
+          <p>- WAGMI 2024/2025</p>
         </div>
       </div>
 

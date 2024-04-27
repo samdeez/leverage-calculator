@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 
 const Leverage = () => {
-  const [feesPercent, setFeesPercent] = useState(0);
-  const [localPrice, setlocalPrice] = useState(55000);
+  const [feesPercent, setFeesPercent] = useState(0.2);
+  const [localPrice, setlocalPrice] = useState(64000);
   const [invest, setInvest] = useState("");
   const [enterPrice, setEnterPrice] = useState("");
   const [exitPrice, setExitPrice] = useState("");
-  const [leverage, setLeverage] = useState(5);
+  const [leverage, setLeverage] = useState(6);
   const [percentPrice, setPercentPrice] = useState(0);
-  const [fundingHour, setFundingHour] = useState(0.003);
-  const [hours, setHours] = useState(24);
+  const [fundingHour, setFundingHour] = useState(0.007);
+  const [hours, setHours] = useState(48);
 
   const handleFeesPercentChange = (event) => {
     setFeesPercent(event.target.value);
@@ -57,14 +57,19 @@ const Leverage = () => {
   };
 
   function levCalc() {
-    let levSum =
-      (
-        ((Number(invest) * Number(leverage)) / Number(enterPrice)) *
-        (Number(exitPrice) - Number(enterPrice))
-      ).toFixed(2) *
-      (1 - Number(feesPercent) / 100);
+    let pnl = (
+      ((Number(invest) * Number(leverage)) / Number(enterPrice)) *
+      (Number(exitPrice) - Number(enterPrice))
+    ).toFixed(2);
 
-    return levSum;
+    let fees = (Number(invest) * Number(leverage) * Number(feesPercent)) / 100;
+    let funding = (((invest * leverage * fundingHour) / 100) * hours).toFixed(
+      3
+    );
+
+    let result = pnl - fees - funding;
+
+    return result;
   }
 
   function shortCalc() {
@@ -82,7 +87,7 @@ const Leverage = () => {
         </h2>
         <hr style={{ marginBottom: "30px" }} />
         <div className="inputContainer">
-          <div className="inputLabel">Trade Amount:</div>
+          <div className="inputLabel">Collateral:</div>
           <input
             type="number"
             value={invest}
@@ -193,7 +198,7 @@ const Leverage = () => {
 
         <div className="note">
           <p>- Don't get greedy! Take profits while you can!</p>
-          <p>- WGMI 2024</p>
+          <p>- WAGMI 2024/2025</p>
         </div>
       </div>
 
@@ -218,9 +223,15 @@ const Leverage = () => {
           {(levCalc() * localPrice).toLocaleString()} T
           <br />
           <span style={{ color: "gray", fontSize: "medium" }}>
-            Funding: -
-            {(((invest * leverage * fundingHour) / 100) * hours).toFixed(3)}$ |
+            Funding: -$
+            {(((invest * leverage * fundingHour) / 100) * hours).toFixed(3)} /
+            Fees: -$
+            {(
+              (Number(invest) * Number(leverage) * Number(feesPercent)) /
+              100
+            ).toFixed(3)}
           </span>
+          <br />
           <span style={{ fontSize: "medium" }}>
             {" "}
             ROI: {(levCalc() + Number(invest)).toLocaleString()}${" ("}
@@ -233,13 +244,7 @@ const Leverage = () => {
         <div className="reswrapper">
           <div className="reswrapperinner">
             <p className="outputLabel">Entery & Exit:</p>
-            <div
-              className="resultgrid"
-              style={{
-                backgroundColor: "gray",
-                background: "linear-gradient(45deg, #333, black)",
-              }}
-            >
+            <div className="resultgrid">
               <span style={{ fontSize: "small", color: "gray" }}>{"IN:"}</span>{" "}
               <br />
               <span style={{ color: "#d0d0d0" }}>
@@ -271,8 +276,6 @@ const Leverage = () => {
             <div
               className="resultgrid"
               style={{
-                backgroundColor: "darkslategray",
-                background: "linear-gradient(45deg, #333, black)",
                 color: "goldenrod",
               }}
             >
@@ -293,7 +296,7 @@ const Leverage = () => {
         <p className="outputLabel">Margin:</p>
 
         <div className="pl">
-          <p className="resultgrid">
+          <p className="resultgrid" style={{ color: "burlywood" }}>
             {(invest * 1).toLocaleString()} $
             <br />
             {(invest / enterPrice).toFixed(6)} ₿
@@ -301,14 +304,7 @@ const Leverage = () => {
             {(invest * localPrice).toLocaleString()} T
           </p>
           <p className="outputLabel">Size:</p>
-          <p
-            className="resultgrid"
-            style={{
-              backgroundColor: "sienna",
-              background: "linear-gradient(135deg, sienna, gray)",
-              color: "burlywood",
-            }}
-          >
+          <p className="resultgrid" style={{ color: "burlywood" }}>
             {(invest * leverage).toLocaleString()} $
             <br />
             {((invest / enterPrice) * leverage).toFixed(6)} ₿

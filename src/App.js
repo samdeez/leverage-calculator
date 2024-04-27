@@ -17,7 +17,7 @@ const App = () => {
 
   return (
     <div className="container-wrapper">
-      <h1>$ Degen Calculator $</h1>
+      <h1>$ Leverage Calculator $</h1>
       <div className="button-wrapper">
         <button
           onClick={handleCross}
@@ -27,7 +27,7 @@ const App = () => {
               : { backgroundColor: "gray" }
           }
         >
-          Degen
+          Spot
         </button>
         <button
           onClick={handleIsolated}
