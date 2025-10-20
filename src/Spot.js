@@ -9,6 +9,12 @@ const Spot = () => {
   const [percentPrice, setPercentPrice] = useState(0);
   const [percentToSell, setPercentToSell] = useState(100);
 
+  //2025 version
+  const [compoundTrades, setCompoundTrades] = useState(1);
+  const handleCompoundTrades = (event) => {
+    setCompoundTrades(event.target.value);
+  };
+
   const leverage = 1;
 
   const handleFeesPercentChange = (event) => {
@@ -58,6 +64,13 @@ const Spot = () => {
       (1 - Number(feesPercent) / 100);
 
     return levSum;
+  }
+
+  function compoundCalc() {
+    let comp = 1 + Number(percentPrice) / 100;
+    let Sum = invest * Math.pow(comp, compoundTrades);
+
+    return Sum;
   }
 
   return (
@@ -153,9 +166,23 @@ const Spot = () => {
           <div className="inputSuffix">%</div>
         </div>
 
+        {/* 2025 version */}
+        <div className="inputContainer">
+          <div className="inputLabel">Compound Trades:</div>
+          <input
+            type="number"
+            value={compoundTrades}
+            onChange={handleCompoundTrades}
+            className="input"
+            placeholder="1"
+          />
+          <div className="inputSuffix">#</div>
+        </div>
+
         <div className="note">
           <p>- Don't get greedy! Take profits while you can!</p>
-          <p>- WAGMI 2024/2025</p>
+          <p>- Stick to the plan! Don't FOMO!</p>
+          <p>- WGMI 2025/2026</p>
         </div>
       </div>
 
@@ -173,15 +200,7 @@ const Spot = () => {
             color: levCalc() < 0 ? "firebrick" : "seagreen",
           }}
         >
-          <span style={{ color: "#d0d0d0", fontSize: "xx-large" }}>
-            ${(levCalc() + Number(invest)).toLocaleString()}
-            <span style={{ fontSize: "x-small", color: "gray" }}>
-              {" "}
-              Total Equity
-            </span>
-          </span>
-          <br />
-          <span>
+          <span style={{ fontSize: "xx-large" }}>
             $
             {levCalc() > 0
               ? "+" + levCalc().toLocaleString()
@@ -191,27 +210,42 @@ const Spot = () => {
               Profit/Loss
             </span>
           </span>
-          <hr class="solid" style={{ margin: "5px" }} />
-          <span style={{ color: "#d0d0d0", fontSize: "larger" }}>
-            {(invest * localPrice + levCalc() * localPrice).toLocaleString()} t
-            <span style={{ fontSize: "x-small", color: "gray" }}>
-              {" "}
-              Total Equity in t
-            </span>
+          <br />
+          <span style={{ fontSize: "large" }}>
+            {((levCalc() + Number(invest)) / Number(invest)) * 100 < -100
+              ? 100
+              : ((levCalc() / invest) * 100).toFixed(1)}
+            %<span style={{ fontSize: "x-small", color: "gray" }}> ROI</span>
           </span>
           <br />
-          <span>
+          <span style={{ color: "#d0d0d0", fontSize: "x-large" }}>
+            ${(levCalc() + Number(invest)).toLocaleString()}
+            <span style={{ fontSize: "x-small", color: "gray" }}>
+              {" "}
+              New Equity
+            </span>
+          </span>
+          <hr class="solid" style={{ margin: "5px" }} />
+          <span style={{ fontSize: "large" }}>
             {levCalc() > 0
               ? "+" + (levCalc() * localPrice).toLocaleString()
               : (levCalc() * localPrice).toLocaleString()}{" "}
             t
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
-              Profit/Loss in t
+              Profit/Loss (t)
             </span>
           </span>
-          <hr class="solid" style={{ margin: "5px" }} />
-          <span style={{ color: "#d0d0d0", fontSize: "medium" }}>
+          <br />
+          <span style={{ color: "#d0d0d0", fontSize: "large" }}>
+            {(invest * localPrice + levCalc() * localPrice).toLocaleString()} t
+            <span style={{ fontSize: "x-small", color: "gray" }}>
+              {" "}
+              New Equity (t)
+            </span>
+          </span>
+          <br />
+          <span style={{ color: "#d0d0d0", fontSize: "large" }}>
             {(invest / enterPrice).toFixed(6)} ₿
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
@@ -219,18 +253,15 @@ const Spot = () => {
             </span>
           </span>
           <br />
-          <span style={{ fontSize: "small" }}>
-            {((levCalc() + Number(invest)) / Number(invest)) * 100 < -100
-              ? 100
-              : ((levCalc() / invest) * 100).toFixed(1)}
-            %<span style={{ fontSize: "x-small", color: "gray" }}> ROI</span>
-          </span>
+
           <hr class="solid" style={{ margin: "5px" }} />
           <span>
-            You turned $<span style={{ fontSize: "x-large" }}>{invest} </span>{" "}
-            into $
-            <span style={{ fontSize: "x-large" }}>
-              {(levCalc() + Number(invest)).toLocaleString()}
+            <span style={{ fontSize: "small" }}>
+              equity after {compoundTrades} compound trades:
+            </span>
+            <br />
+            <span style={{ fontSize: "large" }}>
+              {compoundCalc().toLocaleString()}
             </span>
           </span>
         </div>
@@ -240,3 +271,7 @@ const Spot = () => {
 };
 
 export default Spot;
+
+// $400 x  (1.075)^20
+
+//(Number(invest) * (1 + Number(percentPrice) / 100)) ^ Number(compoundTrades)
