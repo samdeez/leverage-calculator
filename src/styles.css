@@ -110,6 +110,7 @@ input:focus {
   padding: 10px;
   line-height: 30px;
   margin: 5px;
+  text-align: center;
 }
 .pl {
   display: flex;
