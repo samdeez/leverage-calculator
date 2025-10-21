@@ -222,6 +222,15 @@ const Spot = () => {
             %<span style={{ fontSize: "x-small", color: "gray" }}> ROI</span>
           </span>
           <br />
+          <span style={{ fontSize: "large", color: "#d0d0d02c" }}>$</span>
+          <span style={{ color: "#d0d0d02c", fontSize: "x-large" }}>
+            {invest.toLocaleString()}
+            <span style={{ fontSize: "x-small", color: "gray" }}>
+              {" "}
+              Prev Equity
+            </span>
+          </span>
+          <br />
           <span style={{ fontSize: "large", color: "#d0d0d0" }}>$</span>
           <span style={{ color: "#d0d0d0", fontSize: "x-large" }}>
             {(levCalc() + Number(invest)).toLocaleString()}
@@ -243,6 +252,15 @@ const Spot = () => {
           </span>
           <br />
 
+          <span style={{ color: "#d0d0d02c", fontSize: "large" }}>
+            {(invest * localPrice).toLocaleString()}
+            <span style={{ fontSize: "small", color: "gray" }}> t</span>
+            <span style={{ fontSize: "x-small", color: "gray" }}>
+              {" "}
+              Prev Equity
+            </span>
+          </span>
+          <br />
           <span style={{ color: "#d0d0d0", fontSize: "large" }}>
             {(invest * localPrice + levCalc() * localPrice).toLocaleString()}
             <span style={{ fontSize: "small", color: "gray" }}> t</span>
@@ -252,7 +270,7 @@ const Spot = () => {
             </span>
           </span>
           <br />
-          <span style={{ color: "gray", fontSize: "large" }}>
+          <span style={{ color: "gray", fontSize: "small" }}>
             {(invest / enterPrice).toFixed(6)} ₿
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
@@ -271,14 +289,19 @@ const Spot = () => {
               </span>
               compound trades:
             </span>
-
             <br />
-
             <span style={{ fontSize: "large", color: "#8a7028ff" }}>
               $
               {compoundCalc().toLocaleString("en-US", {
                 maximumFractionDigits: 0,
               })}
+            </span>
+            <br />
+            <span style={{ fontSize: "medium", color: "gray" }}>
+              {(compoundCalc() * localPrice).toLocaleString("en-US", {
+                maximumFractionDigits: 0,
+              })}{" "}
+              t
             </span>
           </span>
         </div>
