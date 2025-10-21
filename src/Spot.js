@@ -245,7 +245,7 @@ const Spot = () => {
             </span>
           </span>
           <br />
-          <span style={{ color: "#d0d0d0", fontSize: "large" }}>
+          <span style={{ color: "goldenrod", fontSize: "large" }}>
             {(invest / enterPrice).toFixed(6)} ₿
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
@@ -256,12 +256,12 @@ const Spot = () => {
 
           <hr class="solid" style={{ margin: "5px" }} />
           <span>
-            <span style={{ fontSize: "small" }}>
+            <span style={{ fontSize: "medium" }}>
               equity after {compoundTrades} compound trades:
             </span>
             <br />
-            <span style={{ fontSize: "large" }}>
-              {compoundCalc().toLocaleString()}
+            <span style={{ fontSize: "large", color: "goldenrod" }}>
+              ${compoundCalc().toLocaleString()}
             </span>
           </span>
         </div>
