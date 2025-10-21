@@ -118,6 +118,7 @@ const Spot = () => {
           <div className="inputSuffix">$</div>
         </div>
 
+        {/*
         <div className="inputContainer">
           <div className="inputLabel">% To Sell:</div>
           <input
@@ -129,6 +130,7 @@ const Spot = () => {
           />
           <div className="inputSuffix">%</div>
         </div>
+        */}
 
         <div className="inputContainer">
           <div className="inputLabel">USD Price:</div>
@@ -245,7 +247,7 @@ const Spot = () => {
             </span>
           </span>
           <br />
-          <span style={{ color: "goldenrod", fontSize: "large" }}>
+          <span style={{ color: "gray", fontSize: "large" }}>
             {(invest / enterPrice).toFixed(6)} ₿
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
