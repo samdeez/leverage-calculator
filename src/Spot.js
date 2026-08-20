@@ -2,11 +2,11 @@ import React, { useState } from "react";
 
 const Spot = () => {
   const [feesPercent, setFeesPercent] = useState(0);
-  const [localPrice, setlocalPrice] = useState(60000);
-  const [invest, setInvest] = useState("");
-  const [enterPrice, setEnterPrice] = useState("");
+  const [localPrice, setlocalPrice] = useState(190000);
+  const [invest, setInvest] = useState("200");
+  const [enterPrice, setEnterPrice] = useState("88");
   const [exitPrice, setExitPrice] = useState("");
-  const [percentPrice, setPercentPrice] = useState(0);
+  const [percentPrice, setPercentPrice] = useState(0.58);
   //const [percentToSell, setPercentToSell] = useState(100);
 
   //2025 version
