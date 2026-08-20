@@ -69,8 +69,9 @@ const Spot = () => {
   function compoundCalc() {
     let comp = 1 + Number(percentPrice) / 100;
     let Sum = invest * Math.pow(comp, compoundTrades);
+    let profit = Sum - invest;
 
-    return Sum;
+    return profit;
   }
 
   return (
