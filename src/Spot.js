@@ -284,7 +284,7 @@ const Spot = () => {
 
           <span style={{ fontSize: "medium", color: "gray" }}>
             <span>
-              equity after{" "}
+              profit after{" "}
               <span style={{ fontSize: "large", color: "#d0d0d0" }}>
                 {compoundTrades}{" "}
               </span>
