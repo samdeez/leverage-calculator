@@ -31,15 +31,17 @@ const Spot = () => {
   };
 
   const handleEnterPriceChange = (event) => {
-    const percentChange =
-      ((exitPrice - event.target.value) / event.target.value) * 100;
+    const val = Number(event.target.value);
+    const percentChange = val !== 0 ?
+      ((exitPrice - event.target.value) / event.target.value) * 100 : 0;
     setPercentPrice(percentChange);
     setEnterPrice(event.target.value);
   };
 
   const handleExitPriceChange = (event) => {
-    const percentChange =
-      ((event.target.value - enterPrice) / enterPrice) * 100;
+    const val = Number(enterPrice);
+    const percentChange = val !== 0 ?
+      ((event.target.value - enterPrice) / enterPrice) * 100 : 0;
     setPercentPrice(percentChange);
     setExitPrice(event.target.value);
   };
@@ -56,10 +58,13 @@ const Spot = () => {
   };
 
   function levCalc() {
+    const valEnterPrice = Number(enterPrice);
+    if (valEnterPrice === 0) return 0;
+
     let levSum =
       (
-        ((Number(invest) * Number(leverage)) / Number(enterPrice)) *
-        (Number(exitPrice) - Number(enterPrice))
+        ((Number(invest) * Number(leverage)) / valEnterPrice) *
+        (Number(exitPrice) - valEnterPrice)
       ).toFixed(2) *
       (1 - Number(feesPercent) / 100);
 
@@ -219,9 +224,9 @@ const Spot = () => {
           </span>
           <br />
           <span style={{ fontSize: "large" }}>
-            {((levSumValue + Number(invest)) / Number(invest)) * 100 < -100
+            {Number(invest) === 0 ? 0 : (((levSumValue + Number(invest)) / Number(invest)) * 100 < -100
               ? 100
-              : ((levSumValue / invest) * 100).toFixed(1)}
+              : ((levSumValue / invest) * 100).toFixed(1))}
             %<span style={{ fontSize: "x-small", color: "gray" }}> ROI</span>
           </span>
           <br />
@@ -274,7 +279,7 @@ const Spot = () => {
           </span>
           <br />
           <span style={{ color: "gray", fontSize: "small" }}>
-            {(invest / enterPrice).toFixed(6)} ₿
+            {Number(enterPrice) === 0 ? "0.000000" : (invest / enterPrice).toFixed(6)} ₿
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
               Tokens Recieved
