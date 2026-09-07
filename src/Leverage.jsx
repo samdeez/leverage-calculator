@@ -57,19 +57,15 @@ const Leverage = () => {
   };
 
   function levCalc() {
-    let pnl = (
-      ((Number(invest) * Number(leverage)) / Number(enterPrice)) *
-      (Number(exitPrice) - Number(enterPrice))
-    ).toFixed(2);
-
-    let fees = (Number(invest) * Number(leverage) * Number(feesPercent)) / 100;
-    let funding = (((invest * leverage * fundingHour) / 100) * hours).toFixed(
-      3
+    return calculateLeverage(
+      invest,
+      leverage,
+      enterPrice,
+      exitPrice,
+      feesPercent,
+      fundingHour,
+      hours
     );
-
-    let result = pnl - fees - funding;
-
-    return result;
   }
 
   function shortCalc() {
@@ -316,5 +312,29 @@ const Leverage = () => {
     </div>
   );
 };
+
+export function calculateLeverage(
+  invest,
+  leverage,
+  enterPrice,
+  exitPrice,
+  feesPercent,
+  fundingHour,
+  hours
+) {
+  let pnl = (
+    ((Number(invest) * Number(leverage)) / Number(enterPrice)) *
+    (Number(exitPrice) - Number(enterPrice))
+  ).toFixed(2);
+
+  let fees = (Number(invest) * Number(leverage) * Number(feesPercent)) / 100;
+  let funding = (((Number(invest) * Number(leverage) * Number(fundingHour)) / 100) * Number(hours)).toFixed(
+    3
+  );
+
+  let result = pnl - fees - funding;
+
+  return result;
+}
 
 export default Leverage;
