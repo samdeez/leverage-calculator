@@ -240,7 +240,7 @@ const Spot = () => {
               New Equity
             </span>
           </span>
-          <hr class="solid" style={{ margin: "5px" }} />
+          <hr className="solid" style={{ margin: "5px" }} />
           <span style={{ fontSize: "large" }}>
             {levCalc() > 0
               ? "+" + (levCalc() * localPrice).toLocaleString()
@@ -280,7 +280,7 @@ const Spot = () => {
           </span>
           <br />
 
-          <hr class="solid" style={{ margin: "5px" }} />
+          <hr className="solid" style={{ margin: "5px" }} />
 
           <span style={{ fontSize: "medium", color: "gray" }}>
             <span>
