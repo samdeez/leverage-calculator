@@ -20,15 +20,20 @@ const Leverage = () => {
   };
 
   const handleEnterPriceChange = (event) => {
-    const percentChange =
-      ((exitPrice - event.target.value) / event.target.value) * 100;
+    let percentChange = 0;
+    if (event.target.value && Number(event.target.value) !== 0) {
+      percentChange =
+        ((exitPrice - event.target.value) / event.target.value) * 100;
+    }
     setPercentPrice(percentChange);
     setEnterPrice(event.target.value);
   };
 
   const handleExitPriceChange = (event) => {
-    const percentChange =
-      ((event.target.value - enterPrice) / enterPrice) * 100;
+    let percentChange = 0;
+    if (enterPrice && Number(enterPrice) !== 0) {
+      percentChange = ((event.target.value - enterPrice) / enterPrice) * 100;
+    }
     setPercentPrice(percentChange);
     setExitPrice(event.target.value);
   };
