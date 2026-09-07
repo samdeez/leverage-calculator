@@ -251,7 +251,7 @@ const Leverage = () => {
                 {(enterPrice * 1).toLocaleString()} $
               </span>
               <br />
-              <hr class="solid" style={{ margin: "5px" }} />
+              <hr className="solid" style={{ margin: "5px" }} />
               <span style={{ fontSize: "small", color: "gray" }}>
                 {"OUT:"}
               </span>{" "}
@@ -285,7 +285,7 @@ const Leverage = () => {
                 {(enterPrice - enterPrice / leverage).toLocaleString()} $
               </span>
               <br />
-              <hr class="solid" style={{ margin: "5px" }} />
+              <hr className="solid" style={{ margin: "5px" }} />
               <span style={{ fontSize: "small", color: "gray" }}>Short ⬇</span>
               <br />
               <span>{shortCalc()} $</span>
