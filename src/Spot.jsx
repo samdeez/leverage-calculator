@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { calculatePercentChange } from "./utils";
 
 const Spot = () => {
   const [feesPercent, setFeesPercent] = useState(0);
@@ -31,15 +32,13 @@ const Spot = () => {
   };
 
   const handleEnterPriceChange = (event) => {
-    const percentChange =
-      ((exitPrice - event.target.value) / event.target.value) * 100;
+    const percentChange = calculatePercentChange(event.target.value, exitPrice);
     setPercentPrice(percentChange);
     setEnterPrice(event.target.value);
   };
 
   const handleExitPriceChange = (event) => {
-    const percentChange =
-      ((event.target.value - enterPrice) / enterPrice) * 100;
+    const percentChange = calculatePercentChange(enterPrice, event.target.value);
     setPercentPrice(percentChange);
     setExitPrice(event.target.value);
   };
