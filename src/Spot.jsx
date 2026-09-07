@@ -74,6 +74,9 @@ const Spot = () => {
     return profit;
   }
 
+  const compoundProfit = compoundCalc();
+  const levCalcResult = levCalc();
+
   return (
     <div className="container">
       <div className="insidecol">
@@ -197,18 +200,18 @@ const Spot = () => {
           style={{
             backgroundColor: "#2f2f2f",
             background:
-              levCalc() < 0
+              levCalcResult < 0
                 ? "linear-gradient(45deg, black, #4f2f2f)"
                 : "linear-gradient(45deg, black, darkslategray)",
-            color: levCalc() < 0 ? "firebrick" : "seagreen",
+            color: levCalcResult < 0 ? "firebrick" : "seagreen",
           }}
         >
           <span>
             <span style={{ fontSize: "x-large" }}>
-              {levCalc() > 0 ? "+$" : "$"}
+              {levCalcResult > 0 ? "+$" : "$"}
             </span>
             <span style={{ fontSize: "xx-large" }}>
-              {levCalc().toLocaleString()}
+              {levCalcResult.toLocaleString()}
             </span>
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
@@ -217,9 +220,9 @@ const Spot = () => {
           </span>
           <br />
           <span style={{ fontSize: "large" }}>
-            {((levCalc() + Number(invest)) / Number(invest)) * 100 < -100
+            {((levCalcResult + Number(invest)) / Number(invest)) * 100 < -100
               ? 100
-              : ((levCalc() / invest) * 100).toFixed(1)}
+              : ((levCalcResult / invest) * 100).toFixed(1)}
             %<span style={{ fontSize: "x-small", color: "gray" }}> ROI</span>
           </span>
           <br />
@@ -234,17 +237,17 @@ const Spot = () => {
           <br />
           <span style={{ fontSize: "large", color: "#d0d0d0" }}>$</span>
           <span style={{ color: "#d0d0d0", fontSize: "x-large" }}>
-            {(levCalc() + Number(invest)).toLocaleString()}
+            {(levCalcResult + Number(invest)).toLocaleString()}
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
               New Equity
             </span>
           </span>
-          <hr class="solid" style={{ margin: "5px" }} />
+          <hr className="solid" style={{ margin: "5px" }} />
           <span style={{ fontSize: "large" }}>
-            {levCalc() > 0
-              ? "+" + (levCalc() * localPrice).toLocaleString()
-              : (levCalc() * localPrice).toLocaleString()}{" "}
+            {levCalcResult > 0
+              ? "+" + (levCalcResult * localPrice).toLocaleString()
+              : (levCalcResult * localPrice).toLocaleString()}{" "}
             t
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
@@ -263,7 +266,7 @@ const Spot = () => {
           </span>
           <br />
           <span style={{ color: "#d0d0d0", fontSize: "large" }}>
-            {(invest * localPrice + levCalc() * localPrice).toLocaleString()}
+            {(invest * localPrice + levCalcResult * localPrice).toLocaleString()}
             <span style={{ fontSize: "small", color: "gray" }}> t</span>
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
@@ -280,7 +283,7 @@ const Spot = () => {
           </span>
           <br />
 
-          <hr class="solid" style={{ margin: "5px" }} />
+          <hr className="solid" style={{ margin: "5px" }} />
 
           <span style={{ fontSize: "medium", color: "gray" }}>
             <span>
@@ -293,13 +296,13 @@ const Spot = () => {
             <br />
             <span style={{ fontSize: "large", color: "#8a7028ff" }}>
               $
-              {compoundCalc().toLocaleString("en-US", {
+              {compoundProfit.toLocaleString("en-US", {
                 maximumFractionDigits: 0,
               })}
             </span>
             <br />
             <span style={{ fontSize: "medium", color: "gray" }}>
-              {(compoundCalc() * localPrice).toLocaleString("en-US", {
+              {(compoundProfit * localPrice).toLocaleString("en-US", {
                 maximumFractionDigits: 0,
               })}{" "}
               t
