@@ -74,6 +74,8 @@ const Spot = () => {
     return profit;
   }
 
+  const levSumValue = levCalc();
+
   return (
     <div className="container">
       <div className="insidecol">
@@ -197,18 +199,18 @@ const Spot = () => {
           style={{
             backgroundColor: "#2f2f2f",
             background:
-              levCalc() < 0
+              levSumValue < 0
                 ? "linear-gradient(45deg, black, #4f2f2f)"
                 : "linear-gradient(45deg, black, darkslategray)",
-            color: levCalc() < 0 ? "firebrick" : "seagreen",
+            color: levSumValue < 0 ? "firebrick" : "seagreen",
           }}
         >
           <span>
             <span style={{ fontSize: "x-large" }}>
-              {levCalc() > 0 ? "+$" : "$"}
+              {levSumValue > 0 ? "+$" : "$"}
             </span>
             <span style={{ fontSize: "xx-large" }}>
-              {levCalc().toLocaleString()}
+              {levSumValue.toLocaleString()}
             </span>
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
@@ -217,9 +219,9 @@ const Spot = () => {
           </span>
           <br />
           <span style={{ fontSize: "large" }}>
-            {((levCalc() + Number(invest)) / Number(invest)) * 100 < -100
+            {((levSumValue + Number(invest)) / Number(invest)) * 100 < -100
               ? 100
-              : ((levCalc() / invest) * 100).toFixed(1)}
+              : ((levSumValue / invest) * 100).toFixed(1)}
             %<span style={{ fontSize: "x-small", color: "gray" }}> ROI</span>
           </span>
           <br />
@@ -234,7 +236,7 @@ const Spot = () => {
           <br />
           <span style={{ fontSize: "large", color: "#d0d0d0" }}>$</span>
           <span style={{ color: "#d0d0d0", fontSize: "x-large" }}>
-            {(levCalc() + Number(invest)).toLocaleString()}
+            {(levSumValue + Number(invest)).toLocaleString()}
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
               New Equity
@@ -242,9 +244,9 @@ const Spot = () => {
           </span>
           <hr className="solid" style={{ margin: "5px" }} />
           <span style={{ fontSize: "large" }}>
-            {levCalc() > 0
-              ? "+" + (levCalc() * localPrice).toLocaleString()
-              : (levCalc() * localPrice).toLocaleString()}{" "}
+            {levSumValue > 0
+              ? "+" + (levSumValue * localPrice).toLocaleString()
+              : (levSumValue * localPrice).toLocaleString()}{" "}
             t
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
@@ -263,7 +265,7 @@ const Spot = () => {
           </span>
           <br />
           <span style={{ color: "#d0d0d0", fontSize: "large" }}>
-            {(invest * localPrice + levCalc() * localPrice).toLocaleString()}
+            {(invest * localPrice + levSumValue * localPrice).toLocaleString()}
             <span style={{ fontSize: "small", color: "gray" }}> t</span>
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
