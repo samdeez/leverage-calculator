@@ -31,15 +31,17 @@ const Spot = () => {
   };
 
   const handleEnterPriceChange = (event) => {
+    const val = Number(event.target.value);
     const percentChange =
-      ((exitPrice - event.target.value) / event.target.value) * 100;
+      val === 0 ? 0 : ((exitPrice - event.target.value) / event.target.value) * 100;
     setPercentPrice(percentChange);
     setEnterPrice(event.target.value);
   };
 
   const handleExitPriceChange = (event) => {
+    const enterVal = Number(enterPrice);
     const percentChange =
-      ((event.target.value - enterPrice) / enterPrice) * 100;
+      enterVal === 0 ? 0 : ((event.target.value - enterPrice) / enterPrice) * 100;
     setPercentPrice(percentChange);
     setExitPrice(event.target.value);
   };
@@ -56,10 +58,11 @@ const Spot = () => {
   };
 
   function levCalc() {
-    let levSum =
+    const enterVal = Number(enterPrice);
+    let levSum = enterVal === 0 ? 0 :
       (
-        ((Number(invest) * Number(leverage)) / Number(enterPrice)) *
-        (Number(exitPrice) - Number(enterPrice))
+        ((Number(invest) * Number(leverage)) / enterVal) *
+        (Number(exitPrice) - enterVal)
       ).toFixed(2) *
       (1 - Number(feesPercent) / 100);
 
@@ -274,7 +277,7 @@ const Spot = () => {
           </span>
           <br />
           <span style={{ color: "gray", fontSize: "small" }}>
-            {(invest / enterPrice).toFixed(6)} ₿
+            {Number(enterPrice) === 0 ? 0 : (invest / enterPrice).toFixed(6)} ₿
             <span style={{ fontSize: "x-small", color: "gray" }}>
               {" "}
               Tokens Recieved
