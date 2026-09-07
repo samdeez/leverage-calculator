@@ -79,6 +79,8 @@ const Leverage = () => {
     return shortLiq.toLocaleString();
   }
 
+  const levValue = levCalc();
+
   return (
     <div className="container">
       <div className="insidecol">
@@ -209,18 +211,18 @@ const Leverage = () => {
           style={{
             backgroundColor: "#2f2f2f",
             background:
-              levCalc() < 0
+              levValue < 0
                 ? "linear-gradient(45deg, black, #4f2f2f)"
                 : "linear-gradient(45deg, black, darkslategray)",
-            color: levCalc() < 0 ? "firebrick" : "seagreen",
+            color: levValue < 0 ? "firebrick" : "seagreen",
           }}
         >
-          {levCalc() > 0
-            ? "+" + levCalc().toLocaleString()
-            : levCalc().toLocaleString()}{" "}
+          {levValue > 0
+            ? "+" + levValue.toLocaleString()
+            : levValue.toLocaleString()}{" "}
           $
           <br />
-          {(levCalc() * localPrice).toLocaleString()} T
+          {(levValue * localPrice).toLocaleString()} T
           <br />
           <span style={{ color: "gray", fontSize: "medium" }}>
             Funding: -$
@@ -234,10 +236,10 @@ const Leverage = () => {
           <br />
           <span style={{ fontSize: "medium" }}>
             {" "}
-            ROI: {(levCalc() + Number(invest)).toLocaleString()}${" ("}
-            {((levCalc() + Number(invest)) / Number(invest)) * 100 < -100
+            ROI: {(levValue + Number(invest)).toLocaleString()}${" ("}
+            {((levValue + Number(invest)) / Number(invest)) * 100 < -100
               ? 100
-              : ((levCalc() / invest) * 100).toFixed(1)}
+              : ((levValue / invest) * 100).toFixed(1)}
             %{")"}
           </span>
         </p>
