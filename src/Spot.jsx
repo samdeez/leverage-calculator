@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 const Spot = () => {
   const [feesPercent, setFeesPercent] = useState(0);
-  const [localPrice, setlocalPrice] = useState(190000);
+  const [localPrice, setlocalPrice] = useState(200000);
   const [invest, setInvest] = useState("200");
   const [enterPrice, setEnterPrice] = useState("88");
   const [exitPrice, setExitPrice] = useState("");
@@ -240,7 +240,7 @@ const Spot = () => {
               New Equity
             </span>
           </span>
-          <hr class="solid" style={{ margin: "5px" }} />
+          <hr className="solid" style={{ margin: "5px" }} />
           <span style={{ fontSize: "large" }}>
             {levCalc() > 0
               ? "+" + (levCalc() * localPrice).toLocaleString()
@@ -280,7 +280,7 @@ const Spot = () => {
           </span>
           <br />
 
-          <hr class="solid" style={{ margin: "5px" }} />
+          <hr className="solid" style={{ margin: "5px" }} />
 
           <span style={{ fontSize: "medium", color: "gray" }}>
             <span>
