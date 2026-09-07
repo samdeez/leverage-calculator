@@ -38,8 +38,10 @@ const Spot = () => {
   };
 
   const handleExitPriceChange = (event) => {
-    const percentChange =
-      ((event.target.value - enterPrice) / enterPrice) * 100;
+    const ePrice = Number(enterPrice);
+    const percentChange = !enterPrice || ePrice === 0
+      ? 0
+      : ((event.target.value - ePrice) / ePrice) * 100;
     setPercentPrice(percentChange);
     setExitPrice(event.target.value);
   };
