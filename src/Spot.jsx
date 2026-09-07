@@ -312,7 +312,3 @@ const Spot = () => {
 };
 
 export default Spot;
-
-// $400 x  (1.075)^20
-
-//(Number(invest) * (1 + Number(percentPrice) / 100)) ^ Number(compoundTrades)
