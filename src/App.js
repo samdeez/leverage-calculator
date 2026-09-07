@@ -3,26 +3,16 @@ import Leverage from "./Leverage";
 import Spot from "./Spot";
 
 const App = () => {
-  const [cross, setCross] = useState(true);
-  const [isolated, setIsolated] = useState(false);
-
-  const handleIsolated = () => {
-    setIsolated(true);
-    setCross(false);
-  };
-  const handleCross = () => {
-    setCross(true);
-    setIsolated(false);
-  };
+  const [isLeverage, setIsLeverage] = useState(false);
 
   return (
     <div className="container-wrapper">
       <h1>$ Leverage Calculator $</h1>
       <div className="button-wrapper">
         <button
-          onClick={handleCross}
+          onClick={() => setIsLeverage(false)}
           style={
-            cross
+            !isLeverage
               ? { backgroundColor: "darkslategray" }
               : { backgroundColor: "gray" }
           }
@@ -30,9 +20,9 @@ const App = () => {
           Spot
         </button>
         <button
-          onClick={handleIsolated}
+          onClick={() => setIsLeverage(true)}
           style={
-            isolated
+            isLeverage
               ? { backgroundColor: "darkslategray" }
               : { backgroundColor: "gray" }
           }
@@ -40,7 +30,7 @@ const App = () => {
           Leverage
         </button>
       </div>
-      {isolated ? <Leverage /> : <Spot />}
+      {isLeverage ? <Leverage /> : <Spot />}
     </div>
   );
 };
