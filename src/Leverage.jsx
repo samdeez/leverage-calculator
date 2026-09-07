@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 const Leverage = () => {
   const [feesPercent, setFeesPercent] = useState(0.2);
-  const [localPrice, setlocalPrice] = useState(64000);
+  const [localPrice, setlocalPrice] = useState(200000);
   const [invest, setInvest] = useState("");
   const [enterPrice, setEnterPrice] = useState("");
   const [exitPrice, setExitPrice] = useState("");

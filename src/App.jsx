@@ -40,7 +40,12 @@ const App = () => {
           Leverage
         </button>
       </div>
-      {isolated ? <Leverage /> : <Spot />}
+      <div style={{ display: isolated ? "block" : "none" }}>
+        <Leverage />
+      </div>
+      <div style={{ display: isolated ? "none" : "block" }}>
+        <Spot />
+      </div>
     </div>
   );
 };

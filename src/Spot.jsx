@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 const Spot = () => {
   const [feesPercent, setFeesPercent] = useState(0);
-  const [localPrice, setlocalPrice] = useState(190000);
+  const [localPrice, setlocalPrice] = useState(200000);
   const [invest, setInvest] = useState("200");
   const [enterPrice, setEnterPrice] = useState("88");
   const [exitPrice, setExitPrice] = useState("");
