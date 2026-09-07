@@ -20,15 +20,17 @@ const Leverage = () => {
   };
 
   const handleEnterPriceChange = (event) => {
-    const percentChange =
-      ((exitPrice - event.target.value) / event.target.value) * 100;
+    const val = Number(event.target.value);
+    const percentChange = val !== 0 ?
+      ((exitPrice - event.target.value) / event.target.value) * 100 : 0;
     setPercentPrice(percentChange);
     setEnterPrice(event.target.value);
   };
 
   const handleExitPriceChange = (event) => {
-    const percentChange =
-      ((event.target.value - enterPrice) / enterPrice) * 100;
+    const val = Number(enterPrice);
+    const percentChange = val !== 0 ?
+      ((event.target.value - enterPrice) / enterPrice) * 100 : 0;
     setPercentPrice(percentChange);
     setExitPrice(event.target.value);
   };
@@ -57,9 +59,12 @@ const Leverage = () => {
   };
 
   function levCalc() {
+    const valEnterPrice = Number(enterPrice);
+    if (valEnterPrice === 0) return 0;
+
     let pnl = (
-      ((Number(invest) * Number(leverage)) / Number(enterPrice)) *
-      (Number(exitPrice) - Number(enterPrice))
+      ((Number(invest) * Number(leverage)) / valEnterPrice) *
+      (Number(exitPrice) - valEnterPrice)
     ).toFixed(2);
 
     let fees = (Number(invest) * Number(leverage) * Number(feesPercent)) / 100;
@@ -73,7 +78,9 @@ const Leverage = () => {
   }
 
   function shortCalc() {
-    let shortLiq = enterPrice / leverage;
+    const valLeverage = Number(leverage);
+    if (valLeverage === 0) return "0";
+    let shortLiq = enterPrice / valLeverage;
     shortLiq += +enterPrice;
 
     return shortLiq.toLocaleString();
@@ -235,9 +242,9 @@ const Leverage = () => {
           <span style={{ fontSize: "medium" }}>
             {" "}
             ROI: {(levCalc() + Number(invest)).toLocaleString()}${" ("}
-            {((levCalc() + Number(invest)) / Number(invest)) * 100 < -100
+            {Number(invest) === 0 ? 0 : (((levCalc() + Number(invest)) / Number(invest)) * 100 < -100
               ? 100
-              : ((levCalc() / invest) * 100).toFixed(1)}
+              : ((levCalc() / invest) * 100).toFixed(1))}
             %{")"}
           </span>
         </p>
@@ -282,7 +289,7 @@ const Leverage = () => {
               <span style={{ fontSize: "small", color: "gray" }}>Long ⬆</span>
               <br />
               <span>
-                {(enterPrice - enterPrice / leverage).toLocaleString()} $
+                {Number(leverage) === 0 ? "0" : (enterPrice - enterPrice / leverage).toLocaleString()} $
               </span>
               <br />
               <hr className="solid" style={{ margin: "5px" }} />
@@ -299,7 +306,7 @@ const Leverage = () => {
           <p className="resultgrid" style={{ color: "burlywood" }}>
             {(invest * 1).toLocaleString()} $
             <br />
-            {(invest / enterPrice).toFixed(6)} ₿
+            {Number(enterPrice) === 0 ? "0.000000" : (invest / enterPrice).toFixed(6)} ₿
             <br />
             {(invest * localPrice).toLocaleString()} T
           </p>
@@ -307,7 +314,7 @@ const Leverage = () => {
           <p className="resultgrid" style={{ color: "burlywood" }}>
             {(invest * leverage).toLocaleString()} $
             <br />
-            {((invest / enterPrice) * leverage).toFixed(6)} ₿
+            {Number(enterPrice) === 0 ? "0.000000" : ((invest / enterPrice) * leverage).toFixed(6)} ₿
             <br />
             {(invest * leverage * localPrice).toLocaleString()} T
           </p>
