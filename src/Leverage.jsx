@@ -62,10 +62,15 @@ const Leverage = () => {
   };
 
   function levCalc() {
-    let pnl = (
-      ((Number(invest) * Number(leverage)) / Number(enterPrice)) *
-      (Number(exitPrice) - Number(enterPrice))
-    ).toFixed(2);
+    const entPrice = Number(enterPrice);
+    let pnl = (0).toFixed(2);
+
+    if (entPrice !== 0 && !isNaN(entPrice)) {
+      pnl = (
+        ((Number(invest) * Number(leverage)) / entPrice) *
+        (Number(exitPrice) - entPrice)
+      ).toFixed(2);
+    }
 
     let fees = (Number(invest) * Number(leverage) * Number(feesPercent)) / 100;
     let funding = (((invest * leverage * fundingHour) / 100) * hours).toFixed(
