@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { NumericFormat } from "react-number-format";
 
 const Spot = () => {
   const [feesPercent, setFeesPercent] = useState(0);
@@ -85,10 +86,10 @@ const Spot = () => {
         <hr style={{ marginBottom: "30px" }} />
         <div className="inputContainer">
           <div className="inputLabel">Buy Amount:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={invest}
-            onChange={handleInvestChange}
+            onValueChange={(values) => handleInvestChange({ target: { value: values.value } })}
             className="input"
             placeholder="0"
             onFocus={() => console.log("Clicked!")}
@@ -99,10 +100,10 @@ const Spot = () => {
 
         <div className="inputContainer">
           <div className="inputLabel">Buy Price:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={enterPrice}
-            onChange={handleEnterPriceChange}
+            onValueChange={(values) => handleEnterPriceChange({ target: { value: values.value } })}
             className="input"
             placeholder="0"
           />
@@ -111,10 +112,10 @@ const Spot = () => {
 
         <div className="inputContainer">
           <div className="inputLabel">Sell Price:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={exitPrice}
-            onChange={handleExitPriceChange}
+            onValueChange={(values) => handleExitPriceChange({ target: { value: values.value } })}
             className="input"
             placeholder="0"
           />
@@ -137,10 +138,10 @@ const Spot = () => {
 
         <div className="inputContainer">
           <div className="inputLabel">USD Price:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={localPrice}
-            onChange={handleLocalPriceChange}
+            onValueChange={(values) => handleLocalPriceChange({ target: { value: values.value } })}
             className="input"
             placeholder="0"
           />
@@ -149,10 +150,10 @@ const Spot = () => {
 
         <div className="inputContainer">
           <div className="inputLabel">Fees:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={feesPercent}
-            onChange={handleFeesPercentChange}
+            onValueChange={(values) => handleFeesPercentChange({ target: { value: values.value } })}
             className="input"
             placeholder="0"
           />
@@ -161,10 +162,10 @@ const Spot = () => {
 
         <div className="inputContainer">
           <div className="inputLabel">% Change:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={percentPrice}
-            onChange={handlePercentPriceChange}
+            onValueChange={(values) => handlePercentPriceChange({ target: { value: values.value } })}
             className="input"
             placeholder="0%"
           />
@@ -174,10 +175,10 @@ const Spot = () => {
         {/* 2025 version */}
         <div className="inputContainer">
           <div className="inputLabel">Compound Trades:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={compoundTrades}
-            onChange={handleCompoundTrades}
+            onValueChange={(values) => handleCompoundTrades({ target: { value: values.value } })}
             className="input"
             placeholder="1"
           />
