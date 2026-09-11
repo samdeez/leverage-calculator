@@ -35,6 +35,10 @@ button {
 button:active {
   box-shadow: 1px 1px 2px black;
 }
+button:focus-visible {
+  outline: 3px solid sienna;
+  outline-offset: 2px;
+}
 .gas-section {
   text-align: center;
   color: whitesmoke;
