@@ -314,7 +314,9 @@ const Spot = () => {
   );
 };
 
-export default Spot;
+// ⚡ Bolt Optimization: Memoize the component to prevent unnecessary re-renders
+// when the parent App component's state (tab switching) changes, since this component takes no props.
+export default React.memo(Spot);
 
 // $400 x  (1.075)^20
 
