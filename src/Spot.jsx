@@ -92,7 +92,6 @@ const Spot = () => {
             onValueChange={(values) => handleInvestChange({ target: { value: values.value } })}
             className="input"
             placeholder="0"
-            onFocus={() => console.log("Clicked!")}
           />
 
           <div className="inputSuffix">$</div>
