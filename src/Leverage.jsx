@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { NumericFormat } from "react-number-format";
 
 const Leverage = () => {
   const [feesPercent, setFeesPercent] = useState(0.2);
@@ -100,10 +101,10 @@ const Leverage = () => {
         <hr style={{ marginBottom: "30px" }} />
         <div className="inputContainer">
           <div className="inputLabel">Collateral:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={invest}
-            onChange={handleInvestChange}
+            onValueChange={(values) => handleInvestChange({ target: { value: values.value } })}
             className="input"
             placeholder="0"
             onFocus={() => console.log("Clicked!")}
@@ -114,10 +115,10 @@ const Leverage = () => {
 
         <div className="inputContainer">
           <div className="inputLabel">Entry Price:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={enterPrice}
-            onChange={handleEnterPriceChange}
+            onValueChange={(values) => handleEnterPriceChange({ target: { value: values.value } })}
             className="input"
             placeholder="0"
           />
@@ -126,10 +127,10 @@ const Leverage = () => {
 
         <div className="inputContainer">
           <div className="inputLabel">Exit Price:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={exitPrice}
-            onChange={handleExitPriceChange}
+            onValueChange={(values) => handleExitPriceChange({ target: { value: values.value } })}
             className="input"
             placeholder="0"
           />
@@ -138,10 +139,10 @@ const Leverage = () => {
 
         <div className="inputContainer">
           <div className="inputLabel">USD Price:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={localPrice}
-            onChange={handleLocalPriceChange}
+            onValueChange={(values) => handleLocalPriceChange({ target: { value: values.value } })}
             className="input"
             placeholder="0"
           />
@@ -150,10 +151,10 @@ const Leverage = () => {
 
         <div className="inputContainer">
           <div className="inputLabel">Leverage:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={leverage}
-            onChange={handleLeverageChange}
+            onValueChange={(values) => handleLeverageChange({ target: { value: values.value } })}
             className="input"
             placeholder="0"
           />
@@ -162,10 +163,10 @@ const Leverage = () => {
 
         <div className="inputContainer">
           <div className="inputLabel">Fees:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={feesPercent}
-            onChange={handleFeesPercentChange}
+            onValueChange={(values) => handleFeesPercentChange({ target: { value: values.value } })}
             className="input"
             placeholder="0"
           />
@@ -174,10 +175,10 @@ const Leverage = () => {
 
         <div className="inputContainer">
           <div className="inputLabel">% Change:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={percentPrice}
-            onChange={handlePercentPriceChange}
+            onValueChange={(values) => handlePercentPriceChange({ target: { value: values.value } })}
             className="input"
             placeholder="0%"
           />
@@ -186,10 +187,10 @@ const Leverage = () => {
 
         <div className="inputContainer">
           <div className="inputLabel">Funding Rate/h:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={fundingHour}
-            onChange={handleFundingHour}
+            onValueChange={(values) => handleFundingHour({ target: { value: values.value } })}
             className="input"
             placeholder="$"
           />
@@ -198,10 +199,10 @@ const Leverage = () => {
 
         <div className="inputContainer">
           <div className="inputLabel">Hours Open:</div>
-          <input
-            type="number"
+          <NumericFormat
+            thousandSeparator=","
             value={hours}
-            onChange={handleHours}
+            onValueChange={(values) => handleHours({ target: { value: values.value } })}
             className="input"
             placeholder="h"
           />
