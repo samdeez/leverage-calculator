@@ -330,4 +330,6 @@ const Leverage = () => {
   );
 };
 
-export default Leverage;
+// ⚡ Bolt Optimization: Memoize the component to prevent unnecessary re-renders
+// when the parent App component's state (tab switching) changes, since this component takes no props.
+export default React.memo(Leverage);
