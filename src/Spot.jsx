@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { NumericFormat } from "react-number-format";
 
 const Spot = () => {
@@ -56,7 +56,9 @@ const Spot = () => {
     setInvest(event.target.value);
   };
 
-  function levCalc() {
+  // ⚡ Bolt Optimization: Memoize expensive calculations to prevent unnecessary re-execution
+  // Reduces recalculations when unrelated state (like localPrice) changes
+  const levSumValue = useMemo(() => {
     let levSum =
       (
         ((Number(invest) * Number(leverage)) / Number(enterPrice)) *
@@ -65,17 +67,17 @@ const Spot = () => {
       (1 - Number(feesPercent) / 100);
 
     return levSum;
-  }
+  }, [invest, leverage, enterPrice, exitPrice, feesPercent]);
 
-  function compoundCalc() {
+  // ⚡ Bolt Optimization: Memoize compound calculation
+  // Avoids recalculating Math.pow redundantly on every render or unrelated state update
+  const compoundValue = useMemo(() => {
     let comp = 1 + Number(percentPrice) / 100;
     let Sum = invest * Math.pow(comp, compoundTrades);
     let profit = Sum - invest;
 
     return profit;
-  }
-
-  const levSumValue = levCalc();
+  }, [percentPrice, invest, compoundTrades]);
 
   return (
     <div className="container">
@@ -296,13 +298,13 @@ const Spot = () => {
             <br />
             <span style={{ fontSize: "large", color: "#8a7028ff" }}>
               $
-              {compoundCalc().toLocaleString("en-US", {
+              {compoundValue.toLocaleString("en-US", {
                 maximumFractionDigits: 0,
               })}
             </span>
             <br />
             <span style={{ fontSize: "medium", color: "gray" }}>
-              {(compoundCalc() * localPrice).toLocaleString("en-US", {
+              {(compoundValue * localPrice).toLocaleString("en-US", {
                 maximumFractionDigits: 0,
               })}{" "}
               t
