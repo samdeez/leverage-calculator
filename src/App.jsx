@@ -18,32 +18,36 @@ const App = () => {
   return (
     <div className="container-wrapper">
       <h1>$ Leverage Calculator $</h1>
-      <div className="button-wrapper">
+      <div className="button-wrapper" role="tablist" aria-label="Trading Mode">
         <button
+          role="tab"
+          aria-selected={cross}
           onClick={handleCross}
           style={
             cross
-              ? { backgroundColor: "darkslategray" }
+              ? { backgroundColor: "darkslategray", color: "whitesmoke" }
               : { backgroundColor: "gray" }
           }
         >
           Spot
         </button>
         <button
+          role="tab"
+          aria-selected={isolated}
           onClick={handleIsolated}
           style={
             isolated
-              ? { backgroundColor: "darkslategray" }
+              ? { backgroundColor: "darkslategray", color: "whitesmoke" }
               : { backgroundColor: "gray" }
           }
         >
           Leverage
         </button>
       </div>
-      <div style={{ display: isolated ? "block" : "none" }}>
+      <div role="tabpanel" style={{ display: isolated ? "block" : "none" }}>
         <Leverage />
       </div>
-      <div style={{ display: isolated ? "none" : "block" }}>
+      <div role="tabpanel" style={{ display: isolated ? "none" : "block" }}>
         <Spot />
       </div>
     </div>
