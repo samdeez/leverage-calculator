@@ -1,0 +1,3 @@
+## 2026-09-14 - React.memo() Prevents Re-renders on Tab Switch
+**Learning:** In this application, switching tabs between Leverage and Spot in App.jsx updates the state (cross/isolated). Because Leverage and Spot are not memoized, both components re-render every time the user switches tabs, even though their props have not changed (they receive no props). This causes an unnecessary performance hit, especially considering they have substantial internal state.
+**Action:** Wrap large components with React.memo() to prevent unnecessary re-renders when parent state changes but component props are identical (or empty).
