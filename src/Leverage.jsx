@@ -330,4 +330,5 @@ const Leverage = () => {
   );
 };
 
-export default Leverage;
+// Wrapped in React.memo to prevent unnecessary re-renders when parent state changes (e.g., switching tabs)
+export default React.memo(Leverage);
