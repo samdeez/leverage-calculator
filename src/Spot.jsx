@@ -314,7 +314,8 @@ const Spot = () => {
   );
 };
 
-export default Spot;
+// Wrapped in React.memo to prevent unnecessary re-renders when parent state changes (e.g., switching tabs)
+export default React.memo(Spot);
 
 // $400 x  (1.075)^20
 

@@ -1,0 +1,4 @@
+## 2024-05-24 - React.memo for display:none hidden components
+
+**Learning:** The application uses conditional `display: none` via CSS to hide child components (`Leverage` and `Spot`) when switching tabs, intentionally preserving their internal state. However, because their visibility is controlled by the parent component (`App`) state, switching tabs causes the parent to re-render, which inherently triggers a re-render of *all* child components, even the hidden ones. This causes unnecessary re-renders of heavy calculator components.
+**Action:** When an application hides complex components using `display: none` to preserve state, those child components should be wrapped in `React.memo()` if they do not depend on changing props from the parent. This prevents expensive cascading re-renders when the parent re-renders solely to toggle visibility.
