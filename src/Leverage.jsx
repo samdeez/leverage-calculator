@@ -330,4 +330,6 @@ const Leverage = () => {
   );
 };
 
-export default Leverage;
+// ⚡ Bolt: Wrapped in React.memo() to prevent expensive re-renders
+// when the parent App switches tabs (which only toggles CSS display, not props).
+export default React.memo(Leverage);

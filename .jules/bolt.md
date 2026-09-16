@@ -1,0 +1,3 @@
+## 2024-05-18 - Unnecessary Renders from CSS Display Toggles
+**Learning:** In App.jsx, the components `Leverage` and `Spot` are conditionally displayed using CSS `display: none / block` driven by parent component state. Because they are not unmounted when hidden and their props do not change, switching tabs triggers an unnecessary re-render of the entire component tree for both components.
+**Action:** Always check if expensive components that remain mounted but hidden via state-driven CSS toggles can benefit from `React.memo()`. Wrapping these components prevents re-renders when the parent's state changes.
