@@ -1,0 +1,3 @@
+## 2024-11-20 - Semantic labels with react-number-format
+**Learning:** In this application, the `react-number-format` components pass down HTML attributes like `id` natively to the underlying `<input>` element, allowing standard semantic `<label htmlFor="...">` to function correctly and associate the label with the input.
+**Action:** When working on form accessibility and ensuring screen reader compatibility across inputs wrapped in third party formatters like `react-number-format`, always apply the standard `htmlFor` & `id` pairing pattern over resorting to custom DOM traversal or aria attributes.
