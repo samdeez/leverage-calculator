@@ -330,4 +330,5 @@ const Leverage = () => {
   );
 };
 
-export default Leverage;
+// Memoized to prevent re-renders on CSS tab toggling
+export default React.memo(Leverage);

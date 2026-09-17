@@ -314,7 +314,9 @@ const Spot = () => {
   );
 };
 
-export default Spot;
+// Memoized to prevent re-renders on CSS tab toggling
+// Memoized to prevent re-renders on CSS tab toggling
+export default React.memo(Spot);
 
 // $400 x  (1.075)^20
 
