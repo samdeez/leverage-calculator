@@ -1,0 +1,4 @@
+## 2024-05-24 - Missing Security Headers on Netlify Deployment
+**Vulnerability:** The application was deployed on Netlify without any basic HTTP security headers (e.g., CSP, X-Frame-Options, X-Content-Type-Options). This leaves the application susceptible to clickjacking, MIME-sniffing, and XSS attacks.
+**Learning:** Netlify relies on a `_headers` file in the public directory to set HTTP response headers for static deployments. This file was missing. Furthermore, since the app is built using Vite and relies on inline styles and Google Fonts, the CSP needs to specifically allow 'unsafe-inline' and the Google Fonts domains to prevent breaking core functionality.
+**Prevention:** Ensure a `public/_headers` file is included in the initial setup of Netlify-hosted static sites and that the CSP is tailored to the build tool and external dependencies used.
