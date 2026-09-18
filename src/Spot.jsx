@@ -314,7 +314,9 @@ const Spot = () => {
   );
 };
 
-export default Spot;
+// Memoize Spot component to prevent expensive re-renders when switching tabs in App.jsx
+// (visibility is controlled via CSS display: none/block and no props are passed)
+export default React.memo(Spot);
 
 // $400 x  (1.075)^20
 
