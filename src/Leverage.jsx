@@ -330,4 +330,6 @@ const Leverage = () => {
   );
 };
 
-export default Leverage;
+// Memoize Leverage component to prevent expensive re-renders when switching tabs in App.jsx
+// (visibility is controlled via CSS display: none/block and no props are passed)
+export default React.memo(Leverage);
