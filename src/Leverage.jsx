@@ -330,4 +330,7 @@ const Leverage = () => {
   );
 };
 
-export default Leverage;
+// ⚡ Bolt: Wrap with React.memo() to prevent unnecessary re-renders when switching tabs in App.jsx.
+// The component is hidden via CSS 'display' to preserve input state, but without memo(),
+// it still re-renders whenever App's state changes.
+export default React.memo(Leverage);

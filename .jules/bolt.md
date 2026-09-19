@@ -1,0 +1,3 @@
+## 2024-05-18 - React.memo() with CSS 'display' hiding pattern
+**Learning:** In `App.jsx`, the child components `Leverage` and `Spot` are toggled using CSS `display: block/none` rather than being unmounted. This preserves their internal state (so user inputs aren't lost when switching tabs). However, because they are part of the `App` component's render tree and `App` state changes when switching tabs, *both* components re-render every time a tab is clicked, even though they receive no new props.
+**Action:** Always wrap components with `React.memo()` when they are conditionally hidden via CSS `display` and their parent's state changes. This is a crucial codebase-specific optimization to prevent expensive hidden component re-renders.
