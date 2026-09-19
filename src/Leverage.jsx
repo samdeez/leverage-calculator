@@ -100,8 +100,9 @@ const Leverage = () => {
         </h2>
         <hr style={{ marginBottom: "30px" }} />
         <div className="inputContainer">
-          <div className="inputLabel">Collateral:</div>
+          <label htmlFor="lev-invest" className="inputLabel">Collateral:</label>
           <NumericFormat
+            id="lev-invest"
             thousandSeparator=","
             value={invest}
             onValueChange={(values) => handleInvestChange({ target: { value: values.value } })}
@@ -114,8 +115,9 @@ const Leverage = () => {
         </div>
 
         <div className="inputContainer">
-          <div className="inputLabel">Entry Price:</div>
+          <label htmlFor="lev-enterPrice" className="inputLabel">Entry Price:</label>
           <NumericFormat
+            id="lev-enterPrice"
             thousandSeparator=","
             value={enterPrice}
             onValueChange={(values) => handleEnterPriceChange({ target: { value: values.value } })}
@@ -126,8 +128,9 @@ const Leverage = () => {
         </div>
 
         <div className="inputContainer">
-          <div className="inputLabel">Exit Price:</div>
+          <label htmlFor="lev-exitPrice" className="inputLabel">Exit Price:</label>
           <NumericFormat
+            id="lev-exitPrice"
             thousandSeparator=","
             value={exitPrice}
             onValueChange={(values) => handleExitPriceChange({ target: { value: values.value } })}
@@ -138,8 +141,9 @@ const Leverage = () => {
         </div>
 
         <div className="inputContainer">
-          <div className="inputLabel">USD Price:</div>
+          <label htmlFor="lev-localPrice" className="inputLabel">USD Price:</label>
           <NumericFormat
+            id="lev-localPrice"
             thousandSeparator=","
             value={localPrice}
             onValueChange={(values) => handleLocalPriceChange({ target: { value: values.value } })}
@@ -150,8 +154,9 @@ const Leverage = () => {
         </div>
 
         <div className="inputContainer">
-          <div className="inputLabel">Leverage:</div>
+          <label htmlFor="lev-leverage" className="inputLabel">Leverage:</label>
           <NumericFormat
+            id="lev-leverage"
             thousandSeparator=","
             value={leverage}
             onValueChange={(values) => handleLeverageChange({ target: { value: values.value } })}
@@ -162,8 +167,9 @@ const Leverage = () => {
         </div>
 
         <div className="inputContainer">
-          <div className="inputLabel">Fees:</div>
+          <label htmlFor="lev-feesPercent" className="inputLabel">Fees:</label>
           <NumericFormat
+            id="lev-feesPercent"
             thousandSeparator=","
             value={feesPercent}
             onValueChange={(values) => handleFeesPercentChange({ target: { value: values.value } })}
@@ -174,8 +180,9 @@ const Leverage = () => {
         </div>
 
         <div className="inputContainer">
-          <div className="inputLabel">% Change:</div>
+          <label htmlFor="lev-percentPrice" className="inputLabel">% Change:</label>
           <NumericFormat
+            id="lev-percentPrice"
             thousandSeparator=","
             value={percentPrice}
             onValueChange={(values) => handlePercentPriceChange({ target: { value: values.value } })}
@@ -186,8 +193,9 @@ const Leverage = () => {
         </div>
 
         <div className="inputContainer">
-          <div className="inputLabel">Funding Rate/h:</div>
+          <label htmlFor="lev-fundingHour" className="inputLabel">Funding Rate/h:</label>
           <NumericFormat
+            id="lev-fundingHour"
             thousandSeparator=","
             value={fundingHour}
             onValueChange={(values) => handleFundingHour({ target: { value: values.value } })}
@@ -198,8 +206,9 @@ const Leverage = () => {
         </div>
 
         <div className="inputContainer">
-          <div className="inputLabel">Hours Open:</div>
+          <label htmlFor="lev-hours" className="inputLabel">Hours Open:</label>
           <NumericFormat
+            id="lev-hours"
             thousandSeparator=","
             value={hours}
             onValueChange={(values) => handleHours({ target: { value: values.value } })}
