@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { NumericFormat } from "react-number-format";
 
-const Spot = () => {
+// ⚡ Bolt: Wrapped Spot component with React.memo to prevent unnecessary re-renders when parent App toggles visibility
+const Spot = React.memo(() => {
   const [feesPercent, setFeesPercent] = useState(0);
   const [localPrice, setlocalPrice] = useState(200000);
   const [invest, setInvest] = useState("200");
@@ -312,7 +313,7 @@ const Spot = () => {
       </div>
     </div>
   );
-};
+});
 
 export default Spot;
 
