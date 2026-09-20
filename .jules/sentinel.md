@@ -1,0 +1,4 @@
+## 2024-03-24 - Missing Security Headers in Netlify Deployment
+**Vulnerability:** The Netlify deployment is missing important HTTP security headers, notably X-Frame-Options, X-Content-Type-Options, and Referrer-Policy. This leaves the static site more vulnerable to attacks like clickjacking and MIME-type sniffing.
+**Learning:** Netlify relies on a `_headers` file in the public directory to apply HTTP headers. While a Content-Security-Policy (CSP) is also important, it must be carefully tested first (e.g. in Report-Only mode) so it doesn't break Vite inline styles/scripts or external dependencies like Google Fonts. Therefore, applying the standard non-breaking headers (X-Frame-Options, X-Content-Type-Options) is a safe first step.
+**Prevention:** For static frontend deployments (especially Netlify/Vite), always include a `public/_headers` file containing standard HTTP security headers to implement defense in depth.
