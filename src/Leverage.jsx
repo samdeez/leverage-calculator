@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import { NumericFormat } from "react-number-format";
 
-const Leverage = () => {
+// Wrap in React.memo to prevent unnecessary re-renders when parent switches tab visibility
+const Leverage = memo(() => {
   const [feesPercent, setFeesPercent] = useState(0.2);
   const [localPrice, setlocalPrice] = useState(200000);
   const [invest, setInvest] = useState("");
@@ -328,6 +329,6 @@ const Leverage = () => {
       </div>
     </div>
   );
-};
+});
 
 export default Leverage;

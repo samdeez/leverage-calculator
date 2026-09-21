@@ -1,0 +1,3 @@
+## 2024-06-25 - Prevent re-renders on CSS-hidden components
+**Learning:** In this application architecture, parent components (`App.jsx`) often switch child component visibility (`Leverage` and `Spot`) using CSS `display: block/none` rather than unmounting them, intentionally preserving user input state. However, because `App.jsx` state changes trigger re-renders, the child components were also unnecessarily re-rendering even though they receive no props and their own state hasn't changed.
+**Action:** Always consider `React.memo()` for heavy child components that are conditionally hidden via CSS `display` toggling rather than unmounting, especially when they receive no props. This prevents expensive render cycles on tab switches.
