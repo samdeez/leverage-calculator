@@ -1,0 +1,17 @@
+/*
+  # Prevent clickjacking attacks by ensuring the site cannot be embedded in an iframe
+  X-Frame-Options: DENY
+
+  # Prevent browsers from MIME-sniffing a response away from the declared content-type
+  X-Content-Type-Options: nosniff
+
+  # Control how much referrer information (sent with the Referer header) should be included with requests
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # Restrict access to geolocation, camera, and microphone
+  Permissions-Policy: geolocation=(), camera=(), microphone=()
+
+  # Mitigate Cross-Site Scripting (XSS) and other data injection attacks
+  # Note: Requires 'unsafe-inline' for script/style due to Vite build/React inline styles
+  # Explicitly allows Google Fonts to load
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self';

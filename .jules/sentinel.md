@@ -1,0 +1,4 @@
+## 2024-05-20 - Adding Netlify Security Headers
+**Vulnerability:** Missing default HTTP security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, Content-Security-Policy).
+**Learning:** Netlify deployments require configuring a `public/_headers` file so Vite can bundle and deploy it. Due to how Vite and React function out of the box, `unsafe-inline` must be permitted in both `script-src` and `style-src` in the Content Security Policy to prevent breaking core app functionality. This app heavily uses Google fonts requiring `fonts.googleapis.com` and `fonts.gstatic.com` to be explicitly added to the CSP `style-src` and `font-src`.
+**Prevention:** Consider setting up stricter Content Security Policies iteratively in future frontend deployments to remove `unsafe-inline` dependency (such as adding nonces to styles/scripts). Add security header checks as part of the standard deployment pipeline checks.
