@@ -1,0 +1,3 @@
+## 2024-09-22 - Memoizing components to prevent expensive re-renders when switching tabs
+**Learning:** In `App.jsx`, child components (`Leverage` and `Spot`) are toggled via CSS `display: block/none` rather than being unmounted to preserve state. However, they were still re-rendering every time the tabs were switched because the parent state changed. Since they don't receive new props, this causes unnecessary expensive re-renders.
+**Action:** When a parent component manages state to toggle visibility of child components using CSS `display` instead of conditionally rendering them (unmounting), always wrap the child components in `React.memo()` to prevent them from re-rendering on every tab switch.

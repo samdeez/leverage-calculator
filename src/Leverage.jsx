@@ -330,4 +330,5 @@ const Leverage = () => {
   );
 };
 
-export default Leverage;
+// ⚡ Bolt: Wrapped in React.memo() to prevent unnecessary re-renders when toggling tabs in App.jsx
+export default React.memo(Leverage);
