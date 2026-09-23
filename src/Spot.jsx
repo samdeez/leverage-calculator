@@ -314,7 +314,8 @@ const Spot = () => {
   );
 };
 
-export default Spot;
+// ⚡ Bolt: Wraps component in React.memo() to prevent unnecessary re-renders when switching tabs
+export default React.memo(Spot);
 
 // $400 x  (1.075)^20
 
