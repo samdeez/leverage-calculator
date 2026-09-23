@@ -1,0 +1,3 @@
+## 2024-05-14 - React.memo() with CSS display toggling
+**Learning:** In applications where child components are kept mounted but hidden using CSS `display: block/none` to preserve state across tab switches, the parent component re-rendering will cause all child components (both visible and hidden) to re-render. This leads to expensive re-renders for components that aren't even visible.
+**Action:** Always wrap heavy child components in `React.memo()` when their visibility is controlled by the parent component's state via CSS `display` rather than conditionally unmounting them, especially when they don't receive new props.
