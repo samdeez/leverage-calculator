@@ -1,0 +1,3 @@
+## 2024-05-24 - Accessibility issue with react-number-format NumericFormat
+**Learning:** `NumericFormat` components from `react-number-format` successfully pass standard HTML attributes like `id` down to the underlying `<input>` element correctly. This means we can integrate them seamlessly with semantic `<label htmlFor="...">` tags without any extra wrappers or refs, just by passing `id` directly to `NumericFormat`.
+**Action:** Always prefer using proper `<label htmlFor="...">` and `id` tags over `<div>` placeholders when using `NumericFormat` for accessible screen-reader form navigation and interaction.
