@@ -314,7 +314,9 @@ const Spot = () => {
   );
 };
 
-export default Spot;
+// ⚡ Bolt: Wrapped with React.memo to prevent unnecessary re-renders when switching
+// tabs in App.jsx. The component is hidden via CSS rather than unmounted to preserve state.
+export default React.memo(Spot);
 
 // $400 x  (1.075)^20
 

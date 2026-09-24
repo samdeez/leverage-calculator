@@ -1,0 +1,3 @@
+## 2024-09-24 - React.memo with CSS 'display' Toggle
+**Learning:** The application conditionally hides its main components (`Leverage` and `Spot`) in `App.jsx` using CSS `display: none` rather than unmounting them. This is an architectural choice to preserve user input state when switching tabs. However, because they are rendered within `App` and `App` updates its state (`cross`/`isolated`) when switching tabs, both child components will unnecessarily re-render every time a tab is switched even though their props don't change.
+**Action:** Use `React.memo()` on components whose visibility is controlled by CSS `display: block/none` through parent state to prevent expensive re-renders on every tab switch.
