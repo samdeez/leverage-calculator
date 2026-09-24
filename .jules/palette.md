@@ -1,0 +1,3 @@
+## 2024-06-25 - react-number-format and accessible labels
+**Learning:** `react-number-format` components (like `<NumericFormat>`) correctly pass standard HTML attributes like `id` down to the underlying native `<input>` element. This means we can seamlessly pair them with semantic `<label htmlFor="id">` elements for proper screen reader form navigation and accessibility without needing any special prop mappings or custom wrappers.
+**Action:** When adding or auditing forms using `react-number-format`, always ensure semantic `<label>` elements and `id` pairings are used instead of generic `<div>` wrappers.
