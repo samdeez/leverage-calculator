@@ -11,17 +11,34 @@ import { getSettings } from "./settingsStore";
 
 export const KINDS = {
   swap: { label: "SWAP", tone: "" },
+  arb: { label: "ARB", tone: "gold" },
   receive: { label: "RECEIVE", tone: "pos" },
   send: { label: "SEND", tone: "neg" },
   other: { label: "OTHER", tone: "" },
   failed: { label: "FAILED", tone: "warn" },
+  failedTrade: { label: "FAILED TRADE", tone: "warn" },
 };
 
-/** Classify by the signs of the balance changes. */
-export function classify(changes, ok = true) {
+/** Trade kinds: shown under "Trades" and moved by the "Trades" history mode. */
+export const TRADE_KINDS = new Set(["swap", "arb"]);
+export const isTrade = (e) => TRADE_KINDS.has(e.kind);
+/** A failed DEX transaction: a trade attempt that only cost its fee. */
+export const isFailedTrade = (e) => e.kind === "failed" && !!e.dex;
+
+/**
+ * Classify by the signs of the balance changes. A transaction that went
+ * through a DEX (`dex`) is always a trade: a swap when value moved between
+ * different tokens, otherwise an arbitrage — a round trip that starts and
+ * ends in the same token, leaving only the profit or loss as a net change.
+ */
+export function classify(changes, ok = true, dex = false, routeLength = 2) {
   if (!ok) return "failed";
   const pos = changes.some((c) => c.amount > 0);
   const neg = changes.some((c) => c.amount < 0);
+  if (dex && pos && neg) return "swap";
+  // An arbitrage passes through at least two tokens and nets out in at most one.
+  const netAssets = new Set(changes.map((c) => c.assetId ?? c.key)).size;
+  if (dex && routeLength >= 2 && netAssets <= 1) return "arb";
   if (pos && neg) return "swap";
   if (neg) return "send";
   if (pos) return "receive";
@@ -29,6 +46,43 @@ export function classify(changes, ok = true) {
 }
 
 const EPS = 1e-9;
+
+// DEX and aggregator programs. Transactions that invoke one are trades.
+const DEX_PROGRAMS = new Set([
+  "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4", // Jupiter v6
+  "JUP4Fb2cqiRUcaTHdrPC8h2gNsA2ETXiPDD33WcGuJB", // Jupiter v4
+  "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8", // Raydium AMM v4
+  "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK", // Raydium CLMM
+  "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C", // Raydium CPMM
+  "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc", // Orca Whirlpool
+  "9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP", // Orca v2
+  "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo", // Meteora DLMM
+  "Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB", // Meteora pools
+  "cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG", // Meteora DAMM v2
+  "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P", // Pump.fun
+  "pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA", // PumpSwap
+  "PhoeNiXZ8ByJGLkxNfZRnkUfjvmuYqLR89jjFHGqdXY", // Phoenix
+  "opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb", // OpenBook v2
+  "srmqPvymJeFKQ4zGQed1GFppgkRHL9kaELCbyksJtPX", // OpenBook
+  "2wT8Yq49kHgDzXuPxZSaeLaH1qbmGXtEyPy64bL7aD3c", // Lifinity v2
+  "SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ", // Saber
+  "SoLFiHG9TfgtdUXUjWAxi3LtvYuFyDLVhBWxdMZxyCe", // SolFi
+  "9H6tua7jkLhdm3w8BvgpTn5LZNU7g4ZynDmCiNN3q6Rp", // HumidiFi
+  "swapNyd8XiQwJ6ianp9snpu4brUqFxadzvHebnAXjJZ", // Stabble
+  "ZERor4xhbUycZ6gb9ntrhqscUcZmAbQDjEAtCf4hbZY", // ZeroFi
+  "obriQD1zbpyLz95G5n7nJe6a4DPjpFwa5XYPoNm113y", // Obric
+  "DjVE6JNiYqPL2QXyCUUh8rNjHrbz9hXHNYt99MQ59qw1", // Orca v1
+]);
+// Most DEX programs log their instruction names; this catches the long tail.
+const DEX_LOG = /Instruction: (Swap\w*|Route\w*|SharedAccountsRoute\w*|ExactOut\w*|Buy|Sell)\b|ray_log/;
+
+function usesDex(tx) {
+  const progs = [];
+  for (const ix of tx.transaction?.message?.instructions || []) progs.push(ix.programId);
+  for (const inner of tx.meta?.innerInstructions || []) for (const ix of inner.instructions || []) progs.push(ix.programId);
+  if (progs.some((p) => DEX_PROGRAMS.has(p))) return true;
+  return (tx.meta?.logMessages || []).some((l) => DEX_LOG.test(l));
+}
 const rpcBody = (id, method, params) => ({ jsonrpc: "2.0", id, method, params });
 
 /** Human-readable reason for a failed request, with the likely fix. */
@@ -165,9 +219,11 @@ export function parseSolanaTx(tx, owner, signature) {
   const add = (mint, amt) => deltas.set(mint, (deltas.get(mint) || 0) + amt);
 
   if (idx >= 0) add(SOL_MINT, (meta.postBalances[idx] - meta.preBalances[idx]) / 1e9 + fee);
+  const touched = new Set(); // every token the wallet's accounts handled, even at zero net
   const tokenSide = (list, sign) => {
     for (const b of list || []) {
       if (b.owner !== owner) continue;
+      touched.add(b.mint);
       add(b.mint, sign * Number(b.uiTokenAmount?.uiAmountString ?? b.uiTokenAmount?.uiAmount ?? 0));
     }
   };
@@ -183,7 +239,12 @@ export function parseSolanaTx(tx, owner, signature) {
 
   const ok = !meta.err;
   if (!ok) changes = [];
+  const dex = usesDex(tx);
+  // Tokens the trade passed through, SOL first (arbs usually start and end there).
+  const route = [...touched].sort((a, b) => (a === SOL_MINT ? -1 : b === SOL_MINT ? 1 : 0));
   return {
+    dex,
+    route: dex && route.length ? route : undefined,
     id: signature,
     time: (tx.blockTime || 0) * 1000,
     chain: "solana",
@@ -191,13 +252,14 @@ export function parseSolanaTx(tx, owner, signature) {
     fee,
     feeKey: `solana:${SOL_MINT}`,
     changes,
-    kind: classify(changes, ok),
+    kind: classify(changes, ok, dex, route.length),
     url: `https://solscan.io/tx/${signature}`,
   };
 }
 
-async function fetchSolanaEvents(address, { newest, limit = 40 } = {}) {
-  const sigRes = await solBatch([rpcBody(1, "getSignaturesForAddress", [address, { limit, ...(newest ? { until: newest } : {}) }])]);
+async function fetchSolanaEvents(address, { newest, before, limit = 50 } = {}) {
+  const range = before ? { before } : newest ? { until: newest } : {};
+  const sigRes = await solBatch([rpcBody(1, "getSignaturesForAddress", [address, { limit, ...range }])]);
   // RPCs often refuse with HTTP 200 + a JSON error; don't mistake that for "no transactions".
   if (sigRes[0]?.error) {
     const err = new Error(`Solana RPC: ${sigRes[0].error.message || "request refused"}`);
@@ -218,7 +280,7 @@ async function fetchSolanaEvents(address, { newest, limit = 40 } = {}) {
   if (!events.length && errors.length) throw errors[0];
   if (errors.length) stats.warning = `${sigs.length - events.length} of ${sigs.length} transactions failed to load (${errors[0].message}); retrying on next sync`;
   // Symbols and reference prices for tokens the wallet no longer holds.
-  const mints = [...new Set(events.flatMap((e) => e.changes.map((c) => c.assetId)))];
+  const mints = [...new Set(events.flatMap((e) => [...e.changes.map((c) => c.assetId), ...(e.route || [])]))];
   const [meta, prices] = await Promise.all([
     jupTokenMeta(mints).catch(() => ({})),
     jupPrices(mints.slice(0, 50)).catch(() => ({})),
@@ -228,6 +290,7 @@ async function fetchSolanaEvents(address, { newest, limit = 40 } = {}) {
       c.symbol = c.assetId === SOL_MINT ? "SOL" : meta[c.assetId]?.symbol || c.assetId.slice(0, 4);
       c.price = prices[c.assetId]?.usdPrice;
     }
+    if (e.route) e.routeSymbols = e.route.map((m) => (m === SOL_MINT ? "SOL" : meta[m]?.symbol || m.slice(0, 4)));
   }
   return { events, stats };
 }
@@ -254,8 +317,11 @@ export function parseBitcoinTx(t, address) {
   };
 }
 
-async function fetchBitcoinEvents(address) {
-  const txs = await getJson(`https://mempool.space/api/address/${address}/txs`);
+async function fetchBitcoinEvents(address, { before } = {}) {
+  const url = before
+    ? `https://mempool.space/api/address/${address}/txs/chain/${before}`
+    : `https://mempool.space/api/address/${address}/txs`;
+  const txs = await getJson(url);
   const events = (txs || []).map((t) => parseBitcoinTx(t, address));
   return { events, stats: { source: "mempool.space", signatures: events.length, loaded: events.length } };
 }
@@ -301,6 +367,7 @@ export function parseEvmActivity(chain, address, txs, transfers) {
     }
     if (to === me && value) add(ev, `${chain}:native`, "native", cfg.symbol, value);
     if (t.status && t.status !== "ok") ev.ok = false;
+    if (/swap|route|multicall|execute|exactInput|exactOutput|arb/i.test(t.method || "")) ev.dex = true;
   }
   for (const tr of transfers || []) {
     if (tr.token_type && tr.token_type !== "ERC-20") continue;
@@ -313,7 +380,7 @@ export function parseEvmActivity(chain, address, txs, transfers) {
   }
   return [...byHash.values()].map(({ deltas, hash, ...ev }) => {
     const changes = ev.ok ? [...deltas.values()].filter((c) => Math.abs(c.amount) > EPS) : [];
-    return { ...ev, changes, kind: classify(changes, ev.ok) };
+    return { ...ev, changes, kind: classify(changes, ev.ok, !!ev.dex) };
   });
 }
 
@@ -353,13 +420,13 @@ async function fetchEvmEvents(address, chains) {
  */
 export async function fetchEvents(wallet, opts = {}) {
   if (wallet.family === "solana") return fetchSolanaEvents(wallet.address, opts);
-  if (wallet.family === "bitcoin") return fetchBitcoinEvents(wallet.address);
+  if (wallet.family === "bitcoin") return fetchBitcoinEvents(wallet.address, opts);
   if (wallet.family === "evm") return fetchEvmEvents(wallet.address, wallet.chains);
   return { events: [], stats: {} };
 }
 
 /** Merge new events into a cached list (dedupe by id, newest first, capped). */
-export function mergeEvents(cached = [], fresh = [], cap = 300) {
+export function mergeEvents(cached = [], fresh = [], cap = 2000) {
   const map = new Map(cached.map((e) => [e.id, e]));
   for (const e of fresh) map.set(e.id, e);
   return [...map.values()].sort((a, b) => b.time - a.time).slice(0, cap);
@@ -377,9 +444,9 @@ export function reconstructSeries(events, { total, priceOf, mode = "activity", n
   const pts = [{ x: now, y: total }];
   let v = total;
   for (const e of [...events].sort((a, b) => b.time - a.time)) {
-    if (mode === "trades" && e.kind !== "swap") continue;
+    if (mode === "trades" && !isTrade(e) && !isFailedTrade(e)) continue;
     let dv = e.changes.reduce((s, c) => s + changeUsd(c, priceOf), 0);
-    if (mode === "activity" && e.fee) dv -= e.fee * (priceOf(e.feeKey) ?? 0);
+    if (e.fee) dv -= e.fee * (priceOf(e.feeKey) ?? 0);
     if (Math.abs(dv) < 1e-9 && mode === "trades") continue;
     pts.push({ x: e.time, y: v, event: e });
     v -= dv;

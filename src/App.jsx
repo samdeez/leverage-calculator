@@ -79,7 +79,7 @@ function Shell() {
   return (
     <div className="container-wrapper">
       <header className="appHeader">
-        <h1>$ Leverage Calculator $</h1>
+        <h1>Levcal</h1>
         <div className="headerActions">
           <button type="button" className={`ghost ${settings.privacy ? "on" : ""}`} title="Privacy mode" onClick={() => setSettings((s) => ({ privacy: !s.privacy }))}>
             {settings.privacy ? "◌" : "◉"} <Kbd combo="h" />

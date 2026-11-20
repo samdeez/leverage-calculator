@@ -2,15 +2,15 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Donut, { toSlices } from "../../components/charts/Donut";
 import Sparkline from "../../components/charts/Sparkline";
 import { Card, Kbd, Private, Segmented, StatusDot } from "../../components/ui";
-import { usePortfolio } from "../../context/Portfolio";
+import { canLoadOlder, usePortfolio } from "../../context/Portfolio";
 import { useToast } from "../../context/Toast";
 import { useHotkeys } from "../../hooks/useHotkeys";
 import { useFeedStatus } from "../../hooks/useLivePrice";
 import { usePersistentState } from "../../hooks/usePersistentState";
-import { KINDS, changeUsd } from "../../lib/activity";
+import { KINDS, changeUsd, isFailedTrade, isTrade } from "../../lib/activity";
 import { CHAIN_FAMILIES, CHAIN_NAMES } from "../../lib/chains";
 import { EVM_CHAINS } from "../../lib/chains/evm";
-import { fmtPct, fmtPrice, fmtToken, fmtUsd, shortAddr, signClass, timeAgo } from "../../lib/format";
+import { fmtDate, fmtPct, fmtPrice, fmtToken, fmtUsd, shortAddr, signClass, timeAgo } from "../../lib/format";
 import { RANGES } from "../../lib/history";
 import { ASSETS } from "../../lib/live";
 import { useSettings } from "../../lib/settingsStore";
@@ -431,9 +431,15 @@ const FEED_TABS = [
   { value: "activity", label: "Activity", combo: "y" },
 ];
 
+/** Net result of a transaction in USD, fees included. */
+const eventNetUsd = (e, priceOf) =>
+  e.changes.reduce((s, c) => s + changeUsd(c, priceOf), 0) - (e.fee || 0) * (priceOf(e.feeKey) ?? 0);
+
+const txLabel = (e) => shortAddr(e.chain === "solana" || e.chain === "bitcoin" ? e.id : e.id.split(":").pop(), 5);
+
 function EventRow({ e, priceOf, showWallet }) {
-  const kind = KINDS[e.kind] || KINDS.other;
-  const net = e.changes.reduce((s, c) => s + changeUsd(c, priceOf), 0);
+  const kind = (isFailedTrade(e) ? KINDS.failedTrade : KINDS[e.kind]) || KINDS.other;
+  const net = eventNetUsd(e, priceOf);
   const out = e.changes.filter((c) => c.amount < 0);
   const inc = e.changes.filter((c) => c.amount > 0);
   const leg = (c) => (
@@ -447,7 +453,15 @@ function EventRow({ e, priceOf, showWallet }) {
     <li className="eventRow">
       <span className={`badge kind ${kind.tone}`}>{kind.label}</span>
       <div className="legs">
-        {e.kind === "swap" ? (
+        {e.kind === "arb" ? (
+          <>
+            <span className="route" title="Tokens the trade passed through">
+              {(e.routeSymbols || []).join(" → ") || "route"}
+              {e.routeSymbols?.length > 1 && ` → ${e.routeSymbols[0]}`}
+            </span>
+            {e.changes.map(leg)}
+          </>
+        ) : e.kind === "swap" ? (
           <>
             {out.map(leg)}
             <span className="muted">→</span>
@@ -456,13 +470,13 @@ function EventRow({ e, priceOf, showWallet }) {
         ) : e.changes.length ? (
           e.changes.map(leg)
         ) : (
-          <span className="muted small">{e.ok ? "No balance change" : "Transaction failed"}</span>
+          <span className="muted small">{e.ok ? "No balance change" : e.dex ? "Trade reverted — fee paid" : "Transaction failed"}</span>
         )}
       </div>
       <div className="eventMeta">
-        {e.kind !== "swap" && e.changes.length > 0 && (
-          <b className={signClass(net)}>
-            <Private>{fmtUsd(net, { sign: true })}</Private>
+        {(e.kind === "arb" || (e.kind !== "swap" && e.changes.length > 0)) && (
+          <b className={signClass(net)} title={e.kind === "arb" ? "Net result after fees" : undefined}>
+            <Private>{fmtUsd(net, { sign: true, dp: Math.abs(net) < 1 ? 4 : 2 })}</Private>
           </b>
         )}
         <span className="muted tiny">
@@ -470,9 +484,13 @@ function EventRow({ e, priceOf, showWallet }) {
           {CHAIN_NAMES[e.chain] || e.chain}
           {e.fee ? ` · fee ${fmtToken(e.fee)}` : ""}
         </span>
-        <a href={e.url} target="_blank" rel="noreferrer" className="muted tiny" title={e.id}>
-          {e.pending ? "pending" : e.time ? timeAgo(e.time) : "—"} ↗
-        </a>
+        <span className="muted tiny">
+          <a href={e.url} target="_blank" rel="noreferrer" className="mono txid" title={e.id}>
+            {txLabel(e)} ↗
+          </a>
+          {" · "}
+          {e.pending ? "pending" : e.time ? timeAgo(e.time) : "—"}
+        </span>
       </div>
     </li>
   );
@@ -480,17 +498,48 @@ function EventRow({ e, priceOf, showWallet }) {
 
 function ActivityCard({ wallet, events, tab, setTab, active }) {
   const p = usePortfolio();
-  const [limit, setLimit] = useState(15);
+  const [limit, setLimit] = useState(20);
   const targets = wallet ? [wallet] : p.wallets.filter((w) => !w.hidden);
   const syncing = targets.some((w) => !p.events[w.id]?.syncedAt);
   const errors = targets.map((w) => p.events[w.id]?.error && `${w.label}: ${p.events[w.id].error}`).filter(Boolean);
   const labelOf = Object.fromEntries(p.wallets.map((w) => [w.id, w.label]));
-  const trades = events.filter((e) => e.kind === "swap");
-  const list = (tab === "trades" ? trades : events).slice(0, limit);
+  const trades = events.filter(isTrade);
+  const shown = tab === "trades" ? trades : events;
+  const list = shown.slice(0, limit);
+  const pageable = targets.filter((w) => canLoadOlder(w) && !p.events[w.id]?.exhausted);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+
+  const tradeStats = useMemo(() => {
+    const nets = trades.map((e) => eventNetUsd(e, p.priceOf));
+    const arbs = trades.filter((e) => e.kind === "arb");
+    const arbNets = arbs.map((e) => eventNetUsd(e, p.priceOf));
+    const failed = events.filter(isFailedTrade);
+    const failedFees = failed.reduce((s, e) => s + eventNetUsd(e, p.priceOf), 0);
+    return {
+      net: nets.reduce((s, v) => s + v, 0) + failedFees,
+      arbs: arbs.length,
+      arbWins: arbNets.filter((v) => v > 0).length,
+      failed: failed.length,
+      failedFees,
+    };
+  }, [trades, events, p.priceOf]);
+
+  const loadOlder = async () => {
+    setLoadingOlder(true);
+    try {
+      await Promise.all(pageable.map((w) => p.loadOlderEvents(w)));
+      setLimit((n) => n + 100);
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
 
   useHotkeys(
     "Portfolio",
-    FEED_TABS.map((t) => ({ id: `feed-${t.value}`, keys: [t.combo], label: `Show recent ${t.label.toLowerCase()}`, run: () => setTab(t.value) })),
+    [
+      ...FEED_TABS.map((t) => ({ id: `feed-${t.value}`, keys: [t.combo], label: `Show recent ${t.label.toLowerCase()}`, run: () => setTab(t.value) })),
+      { id: "older", keys: ["o"], label: "Load older transactions", run: () => pageable.length && !loadingOlder && loadOlder() },
+    ],
     { enabled: active }
   );
 
@@ -502,7 +551,10 @@ function ActivityCard({ wallet, events, tab, setTab, active }) {
           <Segmented
             size="sm"
             value={tab}
-            onChange={setTab}
+            onChange={(t) => {
+              setTab(t);
+              setLimit(20);
+            }}
             options={FEED_TABS.map((t) => ({ ...t, label: `${t.label} ${t.value === "trades" ? trades.length : events.length}` }))}
           />
           <button className="ghost" title="Sync now" onClick={() => targets.forEach((w) => p.syncEvents(w, { force: true }))}>
@@ -512,38 +564,70 @@ function ActivityCard({ wallet, events, tab, setTab, active }) {
       }
     >
       {errors.length > 0 && <p className="warn tiny">{errors.join(" · ")}</p>}
+      {tab === "trades" && (trades.length > 0 || tradeStats.failed > 0) && (
+        <div className="historyStats">
+          <span>
+            <span className="muted tiny">Net after fees </span>
+            <b className={signClass(tradeStats.net)}>
+              <Private>{fmtUsd(tradeStats.net, { sign: true })}</Private>
+            </b>
+          </span>
+          {tradeStats.arbs > 0 && (
+            <span>
+              <span className="muted tiny">Arbs </span>
+              {tradeStats.arbs} · {fmtPct((tradeStats.arbWins / tradeStats.arbs) * 100, { sign: false, dp: 0 })} profitable
+            </span>
+          )}
+          {tradeStats.failed > 0 && (
+            <span title="Failed DEX transactions: no trade happened, but the fee was paid">
+              <span className="muted tiny">Failed attempts </span>
+              {tradeStats.failed} · <span className="neg">{fmtUsd(tradeStats.failedFees, { sign: true, dp: 4 })}</span> fees
+            </span>
+          )}
+          <span className="muted tiny">at current prices</span>
+        </div>
+      )}
       <ul className="activity">
         {list.map((e) => (
           <EventRow key={`${e.walletId}:${e.id}`} e={e} priceOf={p.priceOf} showWallet={!wallet && p.wallets.length > 1 ? labelOf[e.walletId] : null} />
         ))}
         {!list.length && (
           <li className="muted small">
-            {syncing ? "Loading on-chain activity…" : tab === "trades" ? "No swaps found in recent transactions" : "No recent transactions"}
+            {syncing ? "Loading on-chain activity…" : tab === "trades" ? "No trades found in loaded transactions" : "No recent transactions"}
           </li>
         )}
       </ul>
+      <div className="actionRow">
+        {shown.length > limit && (
+          <button className="ghost" onClick={() => setLimit((n) => n + 25)}>
+            Show more ({shown.length - limit})
+          </button>
+        )}
+        {pageable.length > 0 && (
+          <button className="ghost" onClick={loadOlder} disabled={loadingOlder || syncing}>
+            {loadingOlder ? "Loading older…" : "Load older transactions"} <Kbd combo="o" />
+          </button>
+        )}
+      </div>
       <div className="syncInfo muted tiny">
         {targets.map((w) => {
           const st = p.events[w.id];
           if (!st?.syncedAt) return <div key={w.id}>{w.label}: syncing…</div>;
           const count = st.events?.length || 0;
+          const oldest = st.events?.at(-1)?.time;
           return (
             <div key={w.id}>
-              {w.label}: {count} transaction{count === 1 ? "" : "s"} · synced {timeAgo(st.syncedAt)}
+              {w.label}: {count} transaction{count === 1 ? "" : "s"}
+              {oldest ? ` back to ${fmtDate(oldest)}` : ""} · synced {timeAgo(st.syncedAt)}
               {st.stats?.source ? ` via ${st.stats.source}` : ""}
+              {st.exhausted && " · full history loaded"}
               {st.stats?.warning && <span className="warn"> · {st.stats.warning}</span>}
               {st.error && <span className="warn"> · last sync failed: {st.error}</span>}
+              {st.olderError && <span className="warn"> · loading older failed: {st.olderError}</span>}
             </div>
           );
         })}
       </div>
-      {(tab === "trades" ? trades : events).length > limit && (
-        <div className="actionRow">
-          <button className="ghost" onClick={() => setLimit((n) => n + 25)}>
-            Show more
-          </button>
-        </div>
-      )}
     </Card>
   );
 }

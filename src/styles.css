@@ -80,21 +80,21 @@ a {
   background-color: var(--brand);
   border-radius: 5px;
   margin: 12px 0 8px;
-  padding: 0 6px;
+  padding: 0 6px 0 12px;
 }
 .appHeader h1 {
   flex: 1;
   margin: 0;
-  padding: 7px 5px;
-  text-align: center;
+  padding: 7px 0;
+  text-align: left;
   color: var(--text);
   background: none;
+  font-size: 20px;
+  letter-spacing: 2px;
 }
 .headerActions {
   display: flex;
   gap: 2px;
-  position: absolute;
-  right: max(12px, calc((100vw - 1180px) / 2 + 18px));
 }
 .headerActions button {
   box-shadow: none;
@@ -1397,12 +1397,9 @@ select.input {
   .container-wrapper {
     padding: 4px 8px 20px;
   }
-  .appHeader {
-    flex-direction: column;
-    padding-bottom: 4px;
-  }
-  .headerActions {
-    position: static;
+  .headerActions button {
+    margin: 2px;
+    padding: 4px 6px;
   }
   .inputLabel {
     width: 120px;
@@ -1483,7 +1480,7 @@ button.primary:hover:not(:disabled),
 /* activity feed */
 .eventRow {
   display: grid !important;
-  grid-template-columns: 74px 1fr auto;
+  grid-template-columns: 96px 1fr auto;
   gap: 10px;
   align-items: center;
 }
@@ -1534,4 +1531,21 @@ button.primary:hover:not(:disabled),
   margin-top: 8px;
   line-height: 1.6;
   overflow-wrap: anywhere;
+}
+
+.badge.gold {
+  background: #c9850033;
+  color: #f0c060;
+}
+.route {
+  font-size: 12px;
+  color: var(--text-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+.txid {
+  color: #7fb5ae;
+  text-decoration: none;
 }

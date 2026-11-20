@@ -25,16 +25,43 @@ export function syncEvents(wallet, { force = false } = {}) {
   if (eventsInflight.has(wallet.id)) return eventsInflight.get(wallet.id);
   if (!force && cur?.syncedAt && Date.now() - cur.syncedAt < EVENTS_MIN_GAP) return Promise.resolve();
   const newest = wallet.family === "solana" ? cur?.events?.find((e) => e.chain === "solana")?.id : undefined;
-  const p = fetchEvents(wallet, { newest, limit: cur?.events?.length ? 25 : 40 })
+  // First sync pulls 100 transactions; later syncs only need what's new.
+  const p = fetchEvents(wallet, { newest, limit: cur?.events?.length ? 50 : 100 })
     .then(({ events: fresh, stats }) =>
       eventsStore.set((s) => ({
         ...s,
         [wallet.id]: { events: mergeEvents(s[wallet.id]?.events, fresh), syncedAt: Date.now(), error: null, stats },
       }))
     )
-    .catch((err) => eventsStore.set((s) => ({ ...s, [wallet.id]: { ...(s[wallet.id] || { events: [] }), syncedAt: Date.now(), error: explainError(err, wallet.family === "evm" ? "EVM explorer" : wallet.family === "bitcoin" ? "mempool.space" : "Solana RPC") } })))
+    .catch((err) => eventsStore.set((s) => ({ ...s, [wallet.id]: { ...(s[wallet.id] || { events: [] }), syncedAt: Date.now(), error: explainError(err, sourceName(wallet)) } })))
     .finally(() => eventsInflight.delete(wallet.id));
   eventsInflight.set(wallet.id, p);
+  return p;
+}
+
+const sourceName = (w) => (w.family === "evm" ? "EVM explorer" : w.family === "bitcoin" ? "mempool.space" : "Solana RPC");
+
+/** Wallet families whose explorers support paging back through history. */
+export const canLoadOlder = (w) => w.family === "solana" || w.family === "bitcoin";
+
+/** Fetch the next page of older transactions, before the oldest cached one. */
+export function loadOlderEvents(wallet, pageSize = 100) {
+  const key = `${wallet.id}:older`;
+  if (eventsInflight.has(key)) return eventsInflight.get(key);
+  const cur = eventsStore.get()[wallet.id];
+  const list = cur?.events || [];
+  const oldest = [...list].reverse().find((e) => (wallet.family === "bitcoin" ? !e.pending : e.chain === "solana"));
+  if (!oldest) return syncEvents(wallet, { force: true });
+  const p = fetchEvents(wallet, { before: oldest.id, limit: pageSize })
+    .then(({ events: fresh }) =>
+      eventsStore.set((s) => ({
+        ...s,
+        [wallet.id]: { ...s[wallet.id], events: mergeEvents(s[wallet.id]?.events, fresh), exhausted: fresh.length === 0, olderError: null },
+      }))
+    )
+    .catch((err) => eventsStore.set((s) => ({ ...s, [wallet.id]: { ...s[wallet.id], olderError: explainError(err, sourceName(wallet)) } })))
+    .finally(() => eventsInflight.delete(key));
+  eventsInflight.set(key, p);
   return p;
 }
 
@@ -316,6 +343,7 @@ export function PortfolioProvider({ children }) {
     events,
     priceOf,
     syncEvents,
+    loadOlderEvents,
     wallets,
     cache,
     byWallet,

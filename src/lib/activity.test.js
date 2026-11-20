@@ -48,6 +48,52 @@ describe("parseSolanaTx", () => {
     expect(e.changes).toHaveLength(1);
   });
 
+  it("classifies a same-token DEX round trip as an arbitrage with its route", () => {
+    const tx = {
+      blockTime: 5,
+      transaction: { message: { accountKeys: [OWNER], instructions: [{ programId: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4" }] } },
+      meta: {
+        err: null,
+        fee: 5000,
+        preBalances: [1_000_000_000],
+        postBalances: [1_000_000_000 - 5000],
+        preTokenBalances: [bal(SOL, OWNER, 10), bal(USDC, OWNER, 2)],
+        postTokenBalances: [bal(SOL, OWNER, 10.004), bal(USDC, OWNER, 2)],
+      },
+    };
+    const e = parseSolanaTx(tx, OWNER, "arb1");
+    expect(e.kind).toBe("arb");
+    expect(e.changes).toHaveLength(1);
+    expect(e.changes[0].amount).toBeCloseTo(0.004);
+    expect(e.route).toEqual([SOL, USDC]);
+  });
+
+  it("detects DEX trades from instruction logs too", () => {
+    const tx = {
+      blockTime: 5,
+      transaction: { message: { accountKeys: [OWNER], instructions: [{ programId: "SomeArbBot111" }] } },
+      meta: {
+        err: null,
+        fee: 5000,
+        preBalances: [2e9],
+        postBalances: [2e9 - 15000],
+        preTokenBalances: [bal(SOL, OWNER, 1), bal(USDC, OWNER, 5)],
+        postTokenBalances: [bal(SOL, OWNER, 1.01), bal(USDC, OWNER, 5)],
+        logMessages: ["Program log: Instruction: Swap"],
+      },
+    };
+    expect(parseSolanaTx(tx, OWNER, "x").kind).toBe("arb");
+  });
+
+  it("does not call a one-token outflow through a DEX program an arbitrage", () => {
+    const tx = {
+      blockTime: 5,
+      transaction: { message: { accountKeys: [OWNER], instructions: [{ programId: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4" }] } },
+      meta: { err: null, fee: 5000, preBalances: [2e9], postBalances: [2e9 - 5000], preTokenBalances: [bal(USDC, OWNER, 30)], postTokenBalances: [bal(USDC, OWNER, 0.6)] },
+    };
+    expect(parseSolanaTx(tx, OWNER, "x").kind).toBe("send");
+  });
+
   it("marks failed transactions", () => {
     const tx = { blockTime: 1, transaction: { message: { accountKeys: [OWNER] } }, meta: { err: { x: 1 }, fee: 5000, preBalances: [10], postBalances: [5] } };
     expect(parseSolanaTx(tx, OWNER, "s").kind).toBe("failed");
@@ -101,6 +147,13 @@ describe("reconstructSeries", () => {
     expect(pts[0].y).toBe(780);
     expect(pts.map((p) => p.y)).toContain(980);
   });
+  it("counts arbitrage results and fees in trades mode", () => {
+    const arb = { id: "c", time: 250, kind: "arb", fee: 0.01, feeKey: "solana:sol", changes: [{ key: "solana:sol", amount: 0.05 }] };
+    const pts = reconstructSeries([...events, arb], { total: 1000, priceOf, mode: "trades", now: 300 });
+    // arb: +5 − 1 fee = +4; swap: +20  → start = 1000 − 4 − 20
+    expect(pts[0].y).toBeCloseTo(976);
+  });
+
   it("only moves on swaps in trades mode", () => {
     const pts = reconstructSeries(events, { total: 1000, priceOf, mode: "trades", now: 300 });
     expect(pts[0].y).toBe(980);
