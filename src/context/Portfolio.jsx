@@ -4,7 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { useLivePrices } from "../hooks/useLivePrice";
 import { fetchWallet } from "../lib/chains";
 import { solanaSocket } from "../lib/chains/solana";
-import { fetchEvents, mergeEvents } from "../lib/activity";
+import { explainError, fetchEvents, mergeEvents } from "../lib/activity";
 import { addSnapshot } from "../lib/history";
 import { createIdbStore, uid } from "../lib/idbStore";
 import { SOL_MINT } from "../lib/jupiter";
@@ -29,7 +29,7 @@ export function syncEvents(wallet, { force = false } = {}) {
     .then((fresh) =>
       eventsStore.set((s) => ({ ...s, [wallet.id]: { events: mergeEvents(s[wallet.id]?.events, fresh), syncedAt: Date.now(), error: null } }))
     )
-    .catch((err) => eventsStore.set((s) => ({ ...s, [wallet.id]: { ...(s[wallet.id] || { events: [] }), syncedAt: Date.now(), error: err.message } })))
+    .catch((err) => eventsStore.set((s) => ({ ...s, [wallet.id]: { ...(s[wallet.id] || { events: [] }), syncedAt: Date.now(), error: explainError(err, wallet.family === "evm" ? "EVM explorer" : wallet.family === "bitcoin" ? "mempool.space" : "Solana RPC") } })))
     .finally(() => eventsInflight.delete(wallet.id));
   eventsInflight.set(wallet.id, p);
   return p;

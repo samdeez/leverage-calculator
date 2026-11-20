@@ -183,7 +183,11 @@ export default function Portfolio({ active, openInCalculator }) {
               walletId={selected?.id}
               walletLabel={selected?.label}
               total={total}
-              ready={(selected ? [selected] : p.wallets.filter((w) => !w.hidden)).every((w) => p.cache[w.id]?.fetchedAt)}
+              ready={(selected ? [selected] : p.wallets.filter((w) => !w.hidden)).every((w) => p.cache[w.id]?.fetchedAt || p.cache[w.id]?.error)}
+              syncing={(selected ? [selected] : p.wallets.filter((w) => !w.hidden)).some((w) => !p.events[w.id]?.syncedAt)}
+              syncErrors={(selected ? [selected] : p.wallets.filter((w) => !w.hidden))
+                .map((w) => p.events[w.id]?.error && `${w.label}: ${p.events[w.id].error}`)
+                .filter(Boolean)}
             />
             <Card
               title="Allocation"

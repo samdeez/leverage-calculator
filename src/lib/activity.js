@@ -31,19 +31,35 @@ export function classify(changes, ok = true) {
 const EPS = 1e-9;
 const rpcBody = (id, method, params) => ({ jsonrpc: "2.0", id, method, params });
 
-async function solBatch(calls) {
-  const res = await fetch(getSettings().solanaRpc, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(calls.length === 1 ? calls[0] : calls),
-  });
-  if (!res.ok) {
-    const err = new Error(`Solana RPC ${res.status}`);
-    err.status = res.status;
-    throw err;
+/** Human-readable reason for a failed request, with the likely fix. */
+export function explainError(err, source = "Solana RPC") {
+  if (err?.name === "AbortError") return `${source} timed out — it may be blocked on this network. Try your own RPC in Settings.`;
+  if (err instanceof TypeError) return `${source} unreachable from this network. Try your own RPC in Settings.`;
+  if (err?.status === 403 || err?.status === 401) return `${source} refused the request (${err.status}). Use an RPC with history access in Settings.`;
+  if (err?.status === 429) return `${source} rate-limited — retrying shortly.`;
+  return err?.message || String(err);
+}
+
+async function solBatch(calls, timeout = 15000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeout);
+  try {
+    const res = await fetch(getSettings().solanaRpc, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(calls.length === 1 ? calls[0] : calls),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) {
+      const err = new Error(`Solana RPC ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
+    const out = await res.json();
+    return Array.isArray(out) ? out : [out];
+  } finally {
+    clearTimeout(timer);
   }
-  const out = await res.json();
-  return Array.isArray(out) ? out : [out];
 }
 
 // Many public RPCs cap getTransaction batches (publicnode allows 1), so the
@@ -122,6 +138,12 @@ export function parseSolanaTx(tx, owner, signature) {
 
 async function fetchSolanaEvents(address, { newest, limit = 40 } = {}) {
   const sigRes = await solBatch([rpcBody(1, "getSignaturesForAddress", [address, { limit, ...(newest ? { until: newest } : {}) }])]);
+  // RPCs often refuse with HTTP 200 + a JSON error; don't mistake that for "no transactions".
+  if (sigRes[0]?.error) {
+    const err = new Error(`Solana RPC: ${sigRes[0].error.message || "request refused"}`);
+    err.status = sigRes[0].error.code === 403 ? 403 : undefined;
+    throw err;
+  }
   const sigs = sigRes[0]?.result || [];
   if (!sigs.length) return [];
   const txs = await getTransactions(sigs.map((s) => s.signature));
@@ -242,7 +264,9 @@ async function fetchEvmEvents(address, chains) {
     })
   );
   const ok = results.filter((r) => r.status === "fulfilled").flatMap((r) => r.value);
-  if (!ok.length && results.every((r) => r.status === "rejected")) throw new Error("No EVM explorer reachable");
+  if (!ok.length && results.every((r) => r.status === "rejected")) {
+    throw new Error("No EVM explorer (Blockscout) reachable from this network");
+  }
   return ok;
 }
 

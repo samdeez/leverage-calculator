@@ -17,7 +17,7 @@ const describe = (e) => {
   return `${KINDS[e.kind]?.label || e.kind}${legs ? ` · ${legs}` : ""}`;
 };
 
-export default function HistoryCard({ history, events, priceOf, mode, setMode, range, setRange, walletId, walletLabel, total, ready = true }) {
+export default function HistoryCard({ history, events, priceOf, mode, setMode, range, setRange, walletId, walletLabel, total, ready = true, syncing = false, syncErrors = [] }) {
   const series = useMemo(() => {
     const now = Date.now();
     const start = now - (RANGES[range] ?? Infinity);
@@ -27,7 +27,7 @@ export default function HistoryCard({ history, events, priceOf, mode, setMode, r
       return s;
     }
     // Rebuilding needs today's balances as the anchor; wait until they're loaded.
-    if (!ready) return [];
+    if (!ready || !events.length) return [];
     const pts = reconstructSeries(events, { total, priceOf, mode, now }).map((p) => ({ ...p, y: Math.max(0, p.y) }));
     // Crop to the range. Known history only reaches back to the oldest fetched
     // transaction, so start there (with a little lead-in) rather than drawing
@@ -50,8 +50,12 @@ export default function HistoryCard({ history, events, priceOf, mode, setMode, r
       : !ready
         ? "Waiting for current balances…"
         : events.length
-        ? `No ${mode === "trades" ? "trades" : "activity"} in this range`
-        : "Loading on-chain activity…";
+          ? `No ${mode === "trades" ? "trades" : "activity"} in this range`
+          : syncing
+            ? "Loading on-chain activity…"
+            : syncErrors.length
+              ? syncErrors[0]
+              : "No on-chain transactions found for this wallet";
 
   return (
     <Card
