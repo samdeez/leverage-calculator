@@ -3,21 +3,14 @@
 export const MAX_POINTS = 3000;
 
 /**
- * Append a snapshot { t, total, wallets: { [id]: value } } unless the last one
- * is newer than `minGapMs`, in which case the last point is replaced (so the
- * newest point always reflects the latest value).
+ * Append a snapshot { t, total, wallets: { [id]: value } } once at least
+ * `minGapMs` has passed since the last one. Points are never rewritten, so
+ * the line only moves on real, spaced-out observations.
  */
 export function addSnapshot(history, snap, minGapMs) {
-  const list = history.slice();
-  const last = list[list.length - 1];
-  if (last && snap.t - last.t < minGapMs && list.length > 1) {
-    const prev = list[list.length - 2];
-    // Keep the boundary point and roll the "live" tail point forward.
-    if (snap.t - prev.t < minGapMs) list[list.length - 1] = snap;
-    else list.push(snap);
-  } else {
-    list.push(snap);
-  }
+  const last = history[history.length - 1];
+  if (last && snap.t - last.t < minGapMs) return history;
+  const list = [...history, snap];
   return list.length > MAX_POINTS ? compact(list) : list;
 }
 

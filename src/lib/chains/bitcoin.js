@@ -33,14 +33,3 @@ export async function fetchBitcoinWallet(address) {
     ],
   };
 }
-
-export async function fetchBitcoinActivity(address) {
-  const txs = await getJson(`${API}/address/${address}/txs`);
-  return (txs || []).slice(0, 15).map((t) => ({
-    id: t.txid,
-    time: (t.status?.block_time || Date.now() / 1000) * 1000,
-    ok: true,
-    pending: !t.status?.confirmed,
-    url: `https://mempool.space/tx/${t.txid}`,
-  }));
-}

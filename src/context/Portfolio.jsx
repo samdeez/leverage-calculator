@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { useLivePrices } from "../hooks/useLivePrice";
 import { fetchWallet } from "../lib/chains";
 import { solanaSocket } from "../lib/chains/solana";
+import { fetchEvents, mergeEvents } from "../lib/activity";
 import { addSnapshot } from "../lib/history";
 import { createIdbStore, uid } from "../lib/idbStore";
 import { SOL_MINT } from "../lib/jupiter";
@@ -12,6 +13,27 @@ import { getSettings, useSettings } from "../lib/settingsStore";
 export const walletsStore = createIdbStore("wallets.v1", []);
 export const cacheStore = createIdbStore("walletCache.v1", {});
 export const historyStore = createIdbStore("history.v1", []);
+/** { [walletId]: { events, syncedAt, error } } — on-chain trades & activity. */
+export const eventsStore = createIdbStore("events.v1", {});
+
+const EVENTS_MIN_GAP = 20000;
+const eventsInflight = new Map();
+
+/** Fetch new transactions for a wallet and merge them into the cache. */
+export function syncEvents(wallet, { force = false } = {}) {
+  const cur = eventsStore.get()[wallet.id];
+  if (eventsInflight.has(wallet.id)) return eventsInflight.get(wallet.id);
+  if (!force && cur?.syncedAt && Date.now() - cur.syncedAt < EVENTS_MIN_GAP) return Promise.resolve();
+  const newest = wallet.family === "solana" ? cur?.events?.find((e) => e.chain === "solana")?.id : undefined;
+  const p = fetchEvents(wallet, { newest, limit: cur?.events?.length ? 25 : 40 })
+    .then((fresh) =>
+      eventsStore.set((s) => ({ ...s, [wallet.id]: { events: mergeEvents(s[wallet.id]?.events, fresh), syncedAt: Date.now(), error: null } }))
+    )
+    .catch((err) => eventsStore.set((s) => ({ ...s, [wallet.id]: { ...(s[wallet.id] || { events: [] }), syncedAt: Date.now(), error: err.message } })))
+    .finally(() => eventsInflight.delete(wallet.id));
+  eventsInflight.set(wallet.id, p);
+  return p;
+}
 
 const Ctx = createContext(null);
 
@@ -19,6 +41,7 @@ export function PortfolioProvider({ children }) {
   const wallets = walletsStore.use();
   const cache = cacheStore.use();
   const history = historyStore.use();
+  const events = eventsStore.use();
   const settings = useSettings();
   const [refreshing, setRefreshing] = useState(() => new Set());
   const [solStatus, setSolStatus] = useState("idle");
@@ -43,6 +66,7 @@ export function PortfolioProvider({ children }) {
       markRefreshing(wallet.id, true);
       const p = fetchWallet(wallet)
         .then((res) => {
+          syncEvents(wallet);
           cacheStore.set((c) => {
             const prevTotal = (c[wallet.id]?.holdings || []).reduce((s, h) => s + h.value, 0);
             const total = res.holdings.reduce((s, h) => s + h.value, 0);
@@ -92,6 +116,10 @@ export function PortfolioProvider({ children }) {
 
   const removeWallet = useCallback((id) => {
     walletsStore.set((list) => list.filter((w) => w.id !== id));
+    eventsStore.set((s) => {
+      const { [id]: _drop, ...rest } = s;
+      return rest;
+    });
     cacheStore.set((c) => {
       const { [id]: _drop, ...rest } = c;
       return rest;
@@ -114,8 +142,9 @@ export function PortfolioProvider({ children }) {
   const walletKey = wallets.map((w) => w.id).join(",");
   useEffect(() => {
     let alive = true;
-    Promise.all([walletsStore.ready, cacheStore.ready]).then(() => {
+    Promise.all([walletsStore.ready, cacheStore.ready, eventsStore.ready]).then(() => {
       if (!alive) return;
+      walletsStore.get().forEach((w) => syncEvents(w));
       // Refresh anything whose cache is older than the poll interval.
       const maxAge = getSettings().refreshSec * 1000;
       walletsStore.get().forEach((w) => {
@@ -171,7 +200,10 @@ export function PortfolioProvider({ children }) {
           // Any transaction mentioning the wallet → refetch token balances (debounced).
           onActivity: () => {
             clearTimeout(timers[w.id]);
-            timers[w.id] = setTimeout(() => refreshWallet(w), 1500);
+            timers[w.id] = setTimeout(() => {
+              refreshWallet(w);
+              syncEvents(w, { force: true });
+            }, 1500);
           },
         })
       );
@@ -268,7 +300,18 @@ export function PortfolioProvider({ children }) {
     wasRefreshing.current = refreshing.size > 0;
   }, [refreshing, takeSnapshot]);
 
+  // Current USD price per asset key (lower-cased), for valuing past changes.
+  const priceMap = useMemo(() => {
+    const m = new Map();
+    for (const wv of Object.values(byWallet)) for (const h of wv.holdings || []) if (h.price) m.set(h.id.toLowerCase(), h.price);
+    return m;
+  }, [byWallet]);
+  const priceOf = useCallback((key) => priceMap.get(String(key).toLowerCase()), [priceMap]);
+
   const value = {
+    events,
+    priceOf,
+    syncEvents,
     wallets,
     cache,
     byWallet,

@@ -1,8 +1,8 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import LineChart from "../../components/charts/LineChart";
 import { Card, Private } from "../../components/ui";
 import { fmt, fmtCompact, fmtPct, fmtPrice, fmtUsd, signClass } from "../../lib/format";
-import { SCENARIO_MOVES, num, priceFromPct } from "../../lib/math";
+import { SCENARIO_MOVES, autoStep, num, priceFromPct } from "../../lib/math";
 import { runCalc } from "./config";
 
 /** P&L as a function of exit price. Click or drag on the chart to set the exit. */
@@ -11,21 +11,38 @@ export function PayoffCard({ mode, s, r, onPick }) {
   const exit = num(s.exit);
   const lev = mode === "leverage" ? Math.max(1, num(s.leverage)) : 1;
 
-  const { data, domain } = useMemo(() => {
-    if (!entry || !num(s.invest)) return { data: [], domain: null };
+  // While dragging, the x-range is frozen. Otherwise moving the exit toward an
+  // edge widened the range, which moved the edge further out — a runaway loop.
+  const [frozen, setFrozen] = useState(null);
+
+  const auto = useMemo(() => {
+    if (!entry || !num(s.invest)) return null;
     // Show a window that covers the planned exit and (for leverage) liquidation.
     let span = entry * Math.min(0.6, Math.max(0.05, 1.6 / lev));
     if (exit) span = Math.max(span, Math.abs(exit - entry) * 1.35);
-    const lo = Math.max(0, entry - span);
-    const hi = entry + span;
+    return [Math.max(0, entry - span), entry + span];
+  }, [entry, exit, lev, s.invest]);
+  const domain = frozen || auto;
+
+  const data = useMemo(() => {
+    if (!domain) return [];
+    const [lo, hi] = domain;
     const pts = [];
     const n = 160;
     for (let i = 0; i <= n; i++) {
       const x = lo + ((hi - lo) * i) / n;
       pts.push({ x, y: runCalc(mode, s, x).pnl });
     }
-    return { data: pts, domain: [lo, hi] };
-  }, [mode, s, entry, exit, lev]);
+    return pts;
+  }, [mode, s, domain]);
+
+  // Snap picks to ~0.1% of entry so values don't jitter through many decimals.
+  const pick = (x) => {
+    if (!domain) return;
+    const step = autoStep(entry) / 10;
+    const clamped = Math.min(domain[1], Math.max(domain[0], x));
+    onPick(Math.round(clamped / step) * step);
+  };
 
   const markers = [
     { x: entry, label: "Entry", tone: "entry" },
@@ -42,7 +59,9 @@ export function PayoffCard({ mode, s, r, onPick }) {
         height={220}
         baseline={0}
         markers={markers}
-        onPick={onPick}
+        onPick={pick}
+        onPickStart={() => setFrozen(auto)}
+        onPickEnd={() => setFrozen(null)}
         ariaLabel="Profit and loss by exit price"
         emptyText="Enter an amount and entry price"
         formatX={(x) => `$${fmtPrice(x)}`}

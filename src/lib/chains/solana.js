@@ -93,17 +93,6 @@ export async function fetchSolanaWallet(address) {
   return { holdings, lamports, source };
 }
 
-export async function fetchSolanaActivity(address, limit = 15) {
-  const sigs = await solRpc("getSignaturesForAddress", [address, { limit }]);
-  return (sigs || []).map((s) => ({
-    id: s.signature,
-    time: (s.blockTime || 0) * 1000,
-    ok: !s.err,
-    memo: s.memo,
-    url: `https://solscan.io/tx/${s.signature}`,
-  }));
-}
-
 /**
  * One shared RPC WebSocket for all Solana wallets.
  * - accountSubscribe: SOL balance changes arrive instantly

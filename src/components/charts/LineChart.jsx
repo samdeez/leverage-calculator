@@ -22,6 +22,9 @@ function niceTicks(min, max, count = 4) {
  * - `baseline`: y value splitting the line into positive/negative colours
  * - `markers`: vertical reference lines [{ x, label, tone }]
  * - `onPick(x)`: click/drag on the plot reports the x under the pointer
+ *   (at most once per animation frame); `onPickStart` / `onPickEnd` bracket a drag
+ * - `minSpanFrac`: minimum y-range as a fraction of the values, so tiny
+ *   fluctuations aren't stretched across the whole chart
  */
 export default function LineChart({
   data,
@@ -32,6 +35,9 @@ export default function LineChart({
   baseline = null,
   markers = [],
   onPick,
+  onPickStart,
+  onPickEnd,
+  minSpanFrac = 0,
   color = "var(--accent)",
   ariaLabel = "chart",
   emptyText = "No data yet",
@@ -40,6 +46,8 @@ export default function LineChart({
   const [wrapRef, width] = useWidth();
   const [hover, setHover] = useState(null);
   const dragging = useRef(false);
+  const pickFrame = useRef(null);
+  const pendingPick = useRef(null);
   const uid = useId().replace(/:/g, "");
 
   const geom = useMemo(() => {
@@ -55,6 +63,12 @@ export default function LineChart({
       y0 -= Math.abs(y0) * 0.05 || 1;
       y1 += Math.abs(y1) * 0.05 || 1;
     }
+    const minSpan = Math.max(Math.abs(y0), Math.abs(y1)) * minSpanFrac;
+    if (y1 - y0 < minSpan) {
+      const mid = (y0 + y1) / 2;
+      y0 = mid - minSpan / 2;
+      y1 = mid + minSpan / 2;
+    }
     const padY = (y1 - y0) * 0.08;
     y0 -= padY;
     y1 += padY;
@@ -67,7 +81,7 @@ export default function LineChart({
     const baseY = sy(baseline ?? y0);
     const area = `${line}L${sx(data[data.length - 1].x).toFixed(1)},${baseY}L${sx(data[0].x).toFixed(1)},${baseY}Z`;
     return { sx, sy, invX, line, area, baseY, iw, ih, x0, x1, yTicks: niceTicks(y0 + padY, y1 - padY), xTicks: niceTicks(x0, x1, Math.max(2, Math.floor(iw / 90))) };
-  }, [data, width, height, baseline, xDomain]);
+  }, [data, width, height, baseline, xDomain, minSpanFrac]);
 
   if (!geom) {
     return (
@@ -89,7 +103,22 @@ export default function LineChart({
     const px = Math.min(Math.max(e.clientX - rect.left, PAD.left), PAD.left + geom.iw);
     const n = nearest(px);
     setHover(n.point);
-    if (dragging.current && onPick) onPick(n.x);
+    if (dragging.current && onPick) {
+      // Coalesce pointer events: one state update per frame keeps drags smooth.
+      pendingPick.current = n.x;
+      if (!pickFrame.current) {
+        pickFrame.current = requestAnimationFrame(() => {
+          pickFrame.current = null;
+          if (pendingPick.current != null) onPick(pendingPick.current);
+        });
+      }
+    }
+  };
+
+  const endDrag = () => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    onPickEnd?.();
   };
 
   const hx = hover ? geom.sx(hover.x) : null;
@@ -107,15 +136,18 @@ export default function LineChart({
         onPointerMove={handleMove}
         onPointerLeave={() => {
           setHover(null);
-          dragging.current = false;
+          endDrag();
         }}
         onPointerDown={(e) => {
           if (!onPick) return;
+          e.preventDefault();
+          onPickStart?.();
           dragging.current = true;
           e.currentTarget.setPointerCapture?.(e.pointerId);
           handleMove(e);
         }}
-        onPointerUp={() => (dragging.current = false)}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
       >
         <defs>
           <linearGradient id={`g${uid}`} x1="0" x2="0" y1="0" y2="1">

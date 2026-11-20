@@ -45,15 +45,13 @@ describe("detectChain", () => {
 });
 
 describe("history", () => {
-  it("rolls the tail point inside the snapshot gap", () => {
+  it("only appends once the snapshot gap has passed", () => {
     let h = [];
     h = addSnapshot(h, { t: 0, total: 1 }, 100);
     h = addSnapshot(h, { t: 10, total: 2 }, 100);
-    h = addSnapshot(h, { t: 20, total: 3 }, 100);
-    expect(h).toHaveLength(2);
-    expect(h[1].total).toBe(3);
+    expect(h).toEqual([{ t: 0, total: 1 }]);
     h = addSnapshot(h, { t: 150, total: 4 }, 100);
-    expect(h).toHaveLength(3);
+    expect(h).toHaveLength(2);
   });
   it("compacts old points", () => {
     const list = Array.from({ length: 10 }, (_, i) => ({ t: i, total: i }));

@@ -7,14 +7,15 @@ import { useToast } from "../../context/Toast";
 import { useHotkeys } from "../../hooks/useHotkeys";
 import { useFeedStatus } from "../../hooks/useLivePrice";
 import { usePersistentState } from "../../hooks/usePersistentState";
-import { CHAIN_FAMILIES, CHAIN_NAMES, fetchActivity } from "../../lib/chains";
+import { KINDS, changeUsd } from "../../lib/activity";
+import { CHAIN_FAMILIES, CHAIN_NAMES } from "../../lib/chains";
 import { EVM_CHAINS } from "../../lib/chains/evm";
 import { fmtPct, fmtPrice, fmtToken, fmtUsd, shortAddr, signClass, timeAgo } from "../../lib/format";
 import { RANGES } from "../../lib/history";
 import { ASSETS } from "../../lib/live";
 import { useSettings } from "../../lib/settingsStore";
 import AddWallet from "./AddWallet";
-import HistoryCard from "./HistoryCard";
+import HistoryCard, { HISTORY_MODES } from "./HistoryCard";
 
 const RANGE_KEYS = Object.keys(RANGES);
 
@@ -27,6 +28,8 @@ export default function Portfolio({ active, openInCalculator }) {
     range: "1W",
     walletId: "",
     alloc: "asset",
+    historyMode: "activity",
+    feed: "trades",
     sort: "value",
     hideDust: true,
   });
@@ -62,6 +65,10 @@ export default function Portfolio({ active, openInCalculator }) {
           const ids = ["", ...p.wallets.map((w) => w.id)];
           patchView({ walletId: ids[(ids.indexOf(view.walletId) + 1) % ids.length] });
         } },
+      { id: "hmode", keys: ["m"], label: "Cycle history mode (activity / trades / tracked)", run: () => {
+          const modes = HISTORY_MODES.map((m) => m.value);
+          patchView({ historyMode: modes[(modes.indexOf(view.historyMode) + 1) % modes.length] });
+        } },
       { id: "dust", keys: ["d"], label: "Toggle small balances", run: () => patchView({ hideDust: !view.hideDust }) },
     ],
     { enabled: active }
@@ -87,6 +94,12 @@ export default function Portfolio({ active, openInCalculator }) {
   }, [selected, source, p.summary.assets, view.hideDust, view.sort, query, settings.dustUsd]);
 
   const total = selected ? source?.total ?? 0 : p.summary.total;
+  const events = useMemo(() => {
+    const ids = selected ? [selected.id] : p.wallets.filter((w) => !w.hidden).map((w) => w.id);
+    return ids
+      .flatMap((id) => (p.events[id]?.events || []).map((e) => ({ ...e, walletId: id })))
+      .sort((a, b) => b.time - a.time);
+  }, [selected, p.wallets, p.events]);
   const change = selected ? source?.change ?? 0 : p.summary.change;
   const changePct = total - change ? (change / (total - change)) * 100 : 0;
 
@@ -161,11 +174,16 @@ export default function Portfolio({ active, openInCalculator }) {
           <div className="grid2">
             <HistoryCard
               history={p.history}
+              events={events}
+              priceOf={p.priceOf}
+              mode={view.historyMode}
+              setMode={(historyMode) => patchView({ historyMode })}
               range={view.range}
               setRange={(range) => patchView({ range })}
               walletId={selected?.id}
               walletLabel={selected?.label}
-              liveTotal={total}
+              total={total}
+              ready={(selected ? [selected] : p.wallets.filter((w) => !w.hidden)).every((w) => p.cache[w.id]?.fetchedAt)}
             />
             <Card
               title="Allocation"
@@ -293,7 +311,7 @@ export default function Portfolio({ active, openInCalculator }) {
             </div>
           </Card>
 
-          <ActivityCard wallet={selected} />
+          <ActivityCard wallet={selected} events={events} tab={view.feed} setTab={(feed) => patchView({ feed })} active={active} />
         </>
       )}
     </div>
@@ -404,55 +422,109 @@ function WalletList({ view, patchView, sparkFor }) {
   );
 }
 
-function ActivityCard({ wallet }) {
-  const p = usePortfolio();
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState(null);
-  const targets = useMemo(
-    () => (wallet ? [wallet] : p.wallets.filter((w) => w.family !== "evm")).slice(0, 5),
-    [wallet, p.wallets]
+const FEED_TABS = [
+  { value: "trades", label: "Trades", combo: "t" },
+  { value: "activity", label: "Activity", combo: "y" },
+];
+
+function EventRow({ e, priceOf, showWallet }) {
+  const kind = KINDS[e.kind] || KINDS.other;
+  const net = e.changes.reduce((s, c) => s + changeUsd(c, priceOf), 0);
+  const out = e.changes.filter((c) => c.amount < 0);
+  const inc = e.changes.filter((c) => c.amount > 0);
+  const leg = (c) => (
+    <span key={c.key} className={`leg ${c.amount > 0 ? "pos" : "neg"}`} title={c.assetId}>
+      {c.amount > 0 ? "+" : "−"}
+      <Private>{fmtToken(Math.abs(c.amount))}</Private> {c.symbol}
+      <span className="muted tiny"> {fmtUsd(Math.abs(changeUsd(c, priceOf)))}</span>
+    </span>
   );
-  const fetchedAtKey = targets.map((w) => p.cache[w.id]?.fetchedAt || 0).join(",");
+  return (
+    <li className="eventRow">
+      <span className={`badge kind ${kind.tone}`}>{kind.label}</span>
+      <div className="legs">
+        {e.kind === "swap" ? (
+          <>
+            {out.map(leg)}
+            <span className="muted">→</span>
+            {inc.map(leg)}
+          </>
+        ) : e.changes.length ? (
+          e.changes.map(leg)
+        ) : (
+          <span className="muted small">{e.ok ? "No balance change" : "Transaction failed"}</span>
+        )}
+      </div>
+      <div className="eventMeta">
+        {e.kind !== "swap" && e.changes.length > 0 && (
+          <b className={signClass(net)}>
+            <Private>{fmtUsd(net, { sign: true })}</Private>
+          </b>
+        )}
+        <span className="muted tiny">
+          {showWallet && `${showWallet} · `}
+          {CHAIN_NAMES[e.chain] || e.chain}
+          {e.fee ? ` · fee ${fmtToken(e.fee)}` : ""}
+        </span>
+        <a href={e.url} target="_blank" rel="noreferrer" className="muted tiny" title={e.id}>
+          {e.pending ? "pending" : e.time ? timeAgo(e.time) : "—"} ↗
+        </a>
+      </div>
+    </li>
+  );
+}
 
-  const load = async () => {
-    setLoading(true);
-    setErr(null);
-    try {
-      const res = await Promise.allSettled(targets.map((w) => fetchActivity(w).then((list) => list.map((x) => ({ ...x, wallet: w })))));
-      const ok = res.filter((r) => r.status === "fulfilled").flatMap((r) => r.value);
-      if (!ok.length && res.some((r) => r.status === "rejected")) setErr("Could not load activity");
-      setItems(ok.sort((a, b) => b.time - a.time).slice(0, 20));
-    } finally {
-      setLoading(false);
-    }
-  };
+function ActivityCard({ wallet, events, tab, setTab, active }) {
+  const p = usePortfolio();
+  const [limit, setLimit] = useState(15);
+  const targets = wallet ? [wallet] : p.wallets.filter((w) => !w.hidden);
+  const syncing = targets.some((w) => !p.events[w.id]?.syncedAt);
+  const errors = targets.map((w) => p.events[w.id]?.error && `${w.label}: ${p.events[w.id].error}`).filter(Boolean);
+  const labelOf = Object.fromEntries(p.wallets.map((w) => [w.id, w.label]));
+  const trades = events.filter((e) => e.kind === "swap");
+  const list = (tab === "trades" ? trades : events).slice(0, limit);
 
-  // Reload when the wallet selection changes or a wallet's balances update.
-  useEffect(() => {
-    if (targets.length) load();
-    else setItems([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targets.map((w) => w.id).join(","), fetchedAtKey]);
-
-  if (wallet?.family === "evm" || (!wallet && !targets.length)) return null;
+  useHotkeys(
+    "Portfolio",
+    FEED_TABS.map((t) => ({ id: `feed-${t.value}`, keys: [t.combo], label: `Show recent ${t.label.toLowerCase()}`, run: () => setTab(t.value) })),
+    { enabled: active }
+  );
 
   return (
-    <Card title="Recent activity" actions={<button className="ghost" onClick={load} disabled={loading}>{loading ? "…" : "↻"}</button>}>
-      {err && <p className="neg small">{err}</p>}
+    <Card
+      title="Recent"
+      actions={
+        <>
+          <Segmented
+            size="sm"
+            value={tab}
+            onChange={setTab}
+            options={FEED_TABS.map((t) => ({ ...t, label: `${t.label} ${t.value === "trades" ? trades.length : events.length}` }))}
+          />
+          <button className="ghost" title="Sync now" onClick={() => targets.forEach((w) => p.syncEvents(w, { force: true }))}>
+            ↻
+          </button>
+        </>
+      }
+    >
+      {errors.length > 0 && <p className="warn tiny">{errors.join(" · ")}</p>}
       <ul className="activity">
-        {items.map((it) => (
-          <li key={it.id}>
-            <span className={`dot ${it.ok ? (it.pending ? "warn" : "pos") : "neg"}`} />
-            <a href={it.url} target="_blank" rel="noreferrer" className="mono">
-              {shortAddr(it.id, 6)}
-            </a>
-            <span className="muted tiny">{it.wallet.label}</span>
-            <span className="muted tiny right">{it.pending ? "pending" : it.time ? timeAgo(it.time) : ""}</span>
-          </li>
+        {list.map((e) => (
+          <EventRow key={`${e.walletId}:${e.id}`} e={e} priceOf={p.priceOf} showWallet={!wallet && p.wallets.length > 1 ? labelOf[e.walletId] : null} />
         ))}
-        {!items.length && !loading && <li className="muted small">No recent transactions</li>}
+        {!list.length && (
+          <li className="muted small">
+            {syncing ? "Loading on-chain activity…" : tab === "trades" ? "No swaps found in recent transactions" : "No recent transactions"}
+          </li>
+        )}
       </ul>
+      {(tab === "trades" ? trades : events).length > limit && (
+        <div className="actionRow">
+          <button className="ghost" onClick={() => setLimit((n) => n + 25)}>
+            Show more
+          </button>
+        </div>
+      )}
     </Card>
   );
 }

@@ -1,6 +1,6 @@
 import { EVM_CHAINS, fetchEvmWallet } from "./evm";
-import { fetchBitcoinActivity, fetchBitcoinWallet } from "./bitcoin";
-import { fetchSolanaActivity, fetchSolanaWallet, resolveSolDomain } from "./solana";
+import { fetchBitcoinWallet } from "./bitcoin";
+import { fetchSolanaWallet, resolveSolDomain } from "./solana";
 
 export const CHAIN_FAMILIES = {
   solana: { label: "Solana", short: "SOL", color: "#9a7cd8", explorer: "https://solscan.io/account/" },
@@ -49,10 +49,4 @@ export async function fetchWallet(wallet) {
     default:
       throw new Error(`Unsupported chain ${wallet.family}`);
   }
-}
-
-export async function fetchActivity(wallet) {
-  if (wallet.family === "solana") return fetchSolanaActivity(wallet.address);
-  if (wallet.family === "bitcoin") return fetchBitcoinActivity(wallet.address);
-  return [];
 }
