@@ -26,8 +26,11 @@ export function syncEvents(wallet, { force = false } = {}) {
   if (!force && cur?.syncedAt && Date.now() - cur.syncedAt < EVENTS_MIN_GAP) return Promise.resolve();
   const newest = wallet.family === "solana" ? cur?.events?.find((e) => e.chain === "solana")?.id : undefined;
   const p = fetchEvents(wallet, { newest, limit: cur?.events?.length ? 25 : 40 })
-    .then((fresh) =>
-      eventsStore.set((s) => ({ ...s, [wallet.id]: { events: mergeEvents(s[wallet.id]?.events, fresh), syncedAt: Date.now(), error: null } }))
+    .then(({ events: fresh, stats }) =>
+      eventsStore.set((s) => ({
+        ...s,
+        [wallet.id]: { events: mergeEvents(s[wallet.id]?.events, fresh), syncedAt: Date.now(), error: null, stats },
+      }))
     )
     .catch((err) => eventsStore.set((s) => ({ ...s, [wallet.id]: { ...(s[wallet.id] || { events: [] }), syncedAt: Date.now(), error: explainError(err, wallet.family === "evm" ? "EVM explorer" : wallet.family === "bitcoin" ? "mempool.space" : "Solana RPC") } })))
     .finally(() => eventsInflight.delete(wallet.id));
@@ -107,6 +110,7 @@ export function PortfolioProvider({ children }) {
       const wallet = { id: uid(), addedAt: Date.now(), hidden: false, ...w };
       walletsStore.set((list) => [...list, wallet]);
       refreshWallet(wallet);
+      syncEvents(wallet, { force: true });
       return wallet;
     },
     [refreshWallet]

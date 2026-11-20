@@ -66,31 +66,74 @@ async function solBatch(calls, timeout = 15000) {
 // batch size adapts per endpoint after the first refusal.
 const txBatchSize = new Map();
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const isBatchLimit = (msg = "") => /batch/i.test(msg);
+
+/**
+ * Fetch many transactions. Adapts to batch limits, retries failures twice
+ * with backoff, and reports what failed instead of silently dropping it.
+ * Returns { results: Map<sig, tx|null>, errors: Error[] }.
+ */
 async function getTransactions(signatures) {
   const url = getSettings().solanaRpc;
   const opts = { encoding: "jsonParsed", maxSupportedTransactionVersion: 0, commitment: "confirmed" };
   const results = new Map();
-  let queue = [...signatures];
-  while (queue.length) {
-    const size = txBatchSize.get(url) ?? 10;
-    if (size > 1) {
-      const group = queue.slice(0, size);
-      try {
-        const res = await solBatch(group.map((sig, i) => rpcBody(i, "getTransaction", [sig, opts])));
-        for (const r of res) if (group[r.id]) results.set(group[r.id], r.result);
-        queue = queue.slice(size);
-      } catch (err) {
-        if (err.status !== 400 && err.status !== 413 && err.status !== 429) throw err;
-        txBatchSize.set(url, 1);
+  const errors = [];
+  const rpcError = (e) => Object.assign(new Error(`Solana RPC: ${e?.message || "request refused"}`), { status: e?.code === 429 ? 429 : undefined });
+  let pending = [...signatures];
+
+  for (let attempt = 0; attempt < 3 && pending.length; attempt++) {
+    if (attempt) await sleep(1500 * attempt);
+    const failed = [];
+    while (pending.length) {
+      const size = txBatchSize.get(url) ?? 10;
+      if (size > 1) {
+        const group = pending.slice(0, size);
+        try {
+          const res = await solBatch(group.map((sig, i) => rpcBody(i, "getTransaction", [sig, opts])));
+          // Some RPCs answer an oversized batch with 200 and an error per item.
+          if (res.some((r) => r.error && isBatchLimit(r.error.message))) {
+            txBatchSize.set(url, 1);
+            continue;
+          }
+          for (const r of res) {
+            const sig = group[r.id];
+            if (!sig) continue;
+            if (r.error) {
+              failed.push(sig);
+              errors.push(rpcError(r.error));
+            } else results.set(sig, r.result);
+          }
+          pending = pending.slice(size);
+        } catch (err) {
+          if (err.status === 400 || err.status === 413) {
+            txBatchSize.set(url, 1);
+            continue;
+          }
+          if (err.status !== 429 && err.name !== "AbortError" && !(err instanceof TypeError)) throw err;
+          errors.push(err);
+          failed.push(...group);
+          pending = pending.slice(size);
+        }
+        continue;
       }
-      continue;
+      // Single requests, four in flight.
+      const group = pending.splice(0, 4);
+      const res = await Promise.allSettled(group.map((sig) => solBatch([rpcBody(1, "getTransaction", [sig, opts])])));
+      res.forEach((r, i) => {
+        const item = r.status === "fulfilled" ? r.value[0] : null;
+        if (r.status === "rejected") {
+          errors.push(r.reason);
+          failed.push(group[i]);
+        } else if (item?.error) {
+          errors.push(rpcError(item.error));
+          failed.push(group[i]);
+        } else results.set(group[i], item?.result ?? null);
+      });
     }
-    // Single requests, four in flight.
-    const group = queue.splice(0, 4);
-    const res = await Promise.allSettled(group.map((sig) => solBatch([rpcBody(1, "getTransaction", [sig, opts])])));
-    res.forEach((r, i) => r.status === "fulfilled" && results.set(group[i], r.value[0]?.result));
+    pending = failed;
   }
-  return results;
+  return { results, errors };
 }
 
 /** Turn one jsonParsed Solana transaction into an event for `owner`. */
@@ -145,13 +188,18 @@ async function fetchSolanaEvents(address, { newest, limit = 40 } = {}) {
     throw err;
   }
   const sigs = sigRes[0]?.result || [];
-  if (!sigs.length) return [];
-  const txs = await getTransactions(sigs.map((s) => s.signature));
+  const stats = { source: new URL(getSettings().solanaRpc).host, signatures: sigs.length, loaded: 0 };
+  if (!sigs.length) return { events: [], stats };
+  const { results, errors } = await getTransactions(sigs.map((s) => s.signature));
   const events = [];
   for (const s of sigs) {
-    const ev = parseSolanaTx(txs.get(s.signature), address, s.signature);
+    const ev = parseSolanaTx(results.get(s.signature), address, s.signature);
     if (ev) events.push(ev);
   }
+  stats.loaded = events.length;
+  // Signatures exist but no transaction could be read: that's a failure, not an empty wallet.
+  if (!events.length && errors.length) throw errors[0];
+  if (errors.length) stats.warning = `${sigs.length - events.length} of ${sigs.length} transactions failed to load (${errors[0].message}); retrying on next sync`;
   // Symbols and reference prices for tokens the wallet no longer holds.
   const mints = [...new Set(events.flatMap((e) => e.changes.map((c) => c.assetId)))];
   const [meta, prices] = await Promise.all([
@@ -164,7 +212,7 @@ async function fetchSolanaEvents(address, { newest, limit = 40 } = {}) {
       c.price = prices[c.assetId]?.usdPrice;
     }
   }
-  return events;
+  return { events, stats };
 }
 
 /* ---------------------------------------------------------------- bitcoin */
@@ -191,7 +239,8 @@ export function parseBitcoinTx(t, address) {
 
 async function fetchBitcoinEvents(address) {
   const txs = await getJson(`https://mempool.space/api/address/${address}/txs`);
-  return (txs || []).map((t) => parseBitcoinTx(t, address));
+  const events = (txs || []).map((t) => parseBitcoinTx(t, address));
+  return { events, stats: { source: "mempool.space", signatures: events.length, loaded: events.length } };
 }
 
 /* -------------------------------------------------------------------- evm */
@@ -267,17 +316,29 @@ async function fetchEvmEvents(address, chains) {
   if (!ok.length && results.every((r) => r.status === "rejected")) {
     throw new Error("No EVM explorer (Blockscout) reachable from this network");
   }
-  return ok;
+  const failedChains = list.filter((_, i) => results[i].status === "rejected");
+  return {
+    events: ok,
+    stats: {
+      source: "Blockscout",
+      signatures: ok.length,
+      loaded: ok.length,
+      ...(failedChains.length ? { warning: `Explorer unreachable for: ${failedChains.join(", ")}` } : {}),
+    },
+  };
 }
 
 /* ------------------------------------------------------------------ entry */
 
-/** Fetch recent events for a wallet. `newest` enables incremental Solana sync. */
+/**
+ * Fetch recent events for a wallet: { events, stats }. `newest` enables
+ * incremental Solana sync. stats: { source, signatures, loaded, warning? }.
+ */
 export async function fetchEvents(wallet, opts = {}) {
   if (wallet.family === "solana") return fetchSolanaEvents(wallet.address, opts);
   if (wallet.family === "bitcoin") return fetchBitcoinEvents(wallet.address);
   if (wallet.family === "evm") return fetchEvmEvents(wallet.address, wallet.chains);
-  return [];
+  return { events: [], stats: {} };
 }
 
 /** Merge new events into a cached list (dedupe by id, newest first, capped). */

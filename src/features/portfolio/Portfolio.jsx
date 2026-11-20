@@ -522,6 +522,21 @@ function ActivityCard({ wallet, events, tab, setTab, active }) {
           </li>
         )}
       </ul>
+      <div className="syncInfo muted tiny">
+        {targets.map((w) => {
+          const st = p.events[w.id];
+          if (!st?.syncedAt) return <div key={w.id}>{w.label}: syncing…</div>;
+          const count = st.events?.length || 0;
+          return (
+            <div key={w.id}>
+              {w.label}: {count} transaction{count === 1 ? "" : "s"} · synced {timeAgo(st.syncedAt)}
+              {st.stats?.source ? ` via ${st.stats.source}` : ""}
+              {st.stats?.warning && <span className="warn"> · {st.stats.warning}</span>}
+              {st.error && <span className="warn"> · last sync failed: {st.error}</span>}
+            </div>
+          );
+        })}
+      </div>
       {(tab === "trades" ? trades : events).length > limit && (
         <div className="actionRow">
           <button className="ghost" onClick={() => setLimit((n) => n + 25)}>

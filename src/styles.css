@@ -1529,3 +1529,9 @@ button.primary:hover:not(:disabled),
     text-align: left;
   }
 }
+
+.syncInfo {
+  margin-top: 8px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
