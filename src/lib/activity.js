@@ -66,6 +66,16 @@ async function solBatch(calls, timeout = 15000) {
 // batch size adapts per endpoint after the first refusal.
 const txBatchSize = new Map();
 
+// Highest transaction version to request. Solana added v1 transactions; RPCs
+// reject a transaction newer than the version a client asks for, and say
+// which version to use, so we follow that hint per endpoint.
+const txVersion = new Map();
+const DEFAULT_TX_VERSION = 1;
+const versionHint = (msg = "") => {
+  const m = /maxSupportedTransactionVersion"?\s*:\s*(\d+)/i.exec(msg);
+  return m ? Number(m[1]) : null;
+};
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const isBatchLimit = (msg = "") => /batch/i.test(msg);
 
@@ -76,7 +86,12 @@ const isBatchLimit = (msg = "") => /batch/i.test(msg);
  */
 async function getTransactions(signatures) {
   const url = getSettings().solanaRpc;
-  const opts = { encoding: "jsonParsed", maxSupportedTransactionVersion: 0, commitment: "confirmed" };
+  const opts = () => ({ encoding: "jsonParsed", maxSupportedTransactionVersion: txVersion.get(url) ?? DEFAULT_TX_VERSION, commitment: "confirmed" });
+  // If the RPC names the version it wants, adopt it; the failed items get retried.
+  const learnVersion = (msg) => {
+    const v = versionHint(msg);
+    if (v != null && v !== (txVersion.get(url) ?? DEFAULT_TX_VERSION)) txVersion.set(url, v);
+  };
   const results = new Map();
   const errors = [];
   const rpcError = (e) => Object.assign(new Error(`Solana RPC: ${e?.message || "request refused"}`), { status: e?.code === 429 ? 429 : undefined });
@@ -90,7 +105,7 @@ async function getTransactions(signatures) {
       if (size > 1) {
         const group = pending.slice(0, size);
         try {
-          const res = await solBatch(group.map((sig, i) => rpcBody(i, "getTransaction", [sig, opts])));
+          const res = await solBatch(group.map((sig, i) => rpcBody(i, "getTransaction", [sig, opts()])));
           // Some RPCs answer an oversized batch with 200 and an error per item.
           if (res.some((r) => r.error && isBatchLimit(r.error.message))) {
             txBatchSize.set(url, 1);
@@ -100,6 +115,7 @@ async function getTransactions(signatures) {
             const sig = group[r.id];
             if (!sig) continue;
             if (r.error) {
+              learnVersion(r.error.message);
               failed.push(sig);
               errors.push(rpcError(r.error));
             } else results.set(sig, r.result);
@@ -119,13 +135,14 @@ async function getTransactions(signatures) {
       }
       // Single requests, four in flight.
       const group = pending.splice(0, 4);
-      const res = await Promise.allSettled(group.map((sig) => solBatch([rpcBody(1, "getTransaction", [sig, opts])])));
+      const res = await Promise.allSettled(group.map((sig) => solBatch([rpcBody(1, "getTransaction", [sig, opts()])])));
       res.forEach((r, i) => {
         const item = r.status === "fulfilled" ? r.value[0] : null;
         if (r.status === "rejected") {
           errors.push(r.reason);
           failed.push(group[i]);
         } else if (item?.error) {
+          learnVersion(item.error.message);
           errors.push(rpcError(item.error));
           failed.push(group[i]);
         } else results.set(group[i], item?.result ?? null);

@@ -48,6 +48,30 @@ describe("Solana activity sync", () => {
     await expect(fetchEvents(wallet)).rejects.toThrow(/rate limited/);
   }, 15000);
 
+  it("requests v1 transactions and follows the RPC's version hint", async () => {
+    setSettings({ solanaRpc: "https://rpc5.test" });
+    const seen = [];
+    const fetchMock = vi.fn((url, init) => {
+      if (!String(url).includes("rpc")) return json({});
+      const body = JSON.parse(init.body);
+      const calls = Array.isArray(body) ? body : [body];
+      if (calls[0].method === "getSignaturesForAddress") return json({ jsonrpc: "2.0", id: 1, result: [{ signature: "s1" }] });
+      const out = calls.map((c) => {
+        const v = c.params[1].maxSupportedTransactionVersion;
+        seen.push(v);
+        return v >= 2
+          ? { jsonrpc: "2.0", id: c.id, result: tx(1) }
+          : { jsonrpc: "2.0", id: c.id, error: { message: 'Transaction version (2) is not supported by the requesting client. Please try the request again with the following configuration parameter: "maxSupportedTransactionVersion": 2' } };
+      });
+      return json(Array.isArray(body) ? out : out[0]);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { events } = await fetchEvents(wallet);
+    expect(seen[0]).toBe(1);
+    expect(seen.at(-1)).toBe(2);
+    expect(events).toHaveLength(1);
+  }, 15000);
+
   it("keeps partial results and reports a warning", async () => {
     setSettings({ solanaRpc: "https://rpc4.test" });
     vi.stubGlobal("fetch", fakeRpc((sig, batch) => (batch ? { httpStatus: 400 } : sig === "s1" ? { result: tx(1) } : { error: { message: "boom" } })));
